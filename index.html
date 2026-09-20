@@ -768,37 +768,47 @@
     }
     .ab-bar.active { background: var(--accent-green); }
 
-    /* 录制时间显示 */
+    /* 录制时间显示与 REC 状态标签 */
     .timer-badge {
       font-family: var(--font-mono);
       font-size: 11px;
       font-weight: 600;
-      color: #cbd5e1;
+      color: #94a3b8;
       padding: 2px 4px;
       display: flex;
       align-items: center;
       gap: 4px;
       letter-spacing: -0.3px;
+      transition: color 0.2s;
+    }
+
+    .timer-badge.recording {
+      color: #f43f5e;
+      font-weight: 700;
     }
 
     .rec-pulse-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--accent-red);
+      background: #f43f5e;
       display: none;
     }
     .rec-pulse-dot.active {
       display: inline-block;
-      animation: pulse-dot 1s infinite;
+      animation: pulse-dot 0.8s infinite;
     }
-    @keyframes pulse-dot { 50% { opacity: 0.2; } }
+    @keyframes pulse-dot {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(1.25); }
+      100% { opacity: 1; transform: scale(1); }
+    }
 
-    /* 核心录制按钮 */
+    /* 核心录制按钮：未录制态 (IDLE) - 精致暗透底色 + 醒目红色 REC 靶心圆圈 */
     .btn-record-pill {
-      background: linear-gradient(135deg, #f43f5e, #e11d48);
-      color: #fff;
-      border: none;
+      background: rgba(244, 63, 94, 0.12);
+      color: #f43f5e;
+      border: 2px solid rgba(244, 63, 94, 0.55);
       width: 42px;
       height: 42px;
       border-radius: 14px;
@@ -807,30 +817,77 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
     }
 
     .btn-record-pill svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
+      width: 20px;
+      height: 20px;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .btn-record-pill:hover {
-      box-shadow: 0 6px 18px rgba(244, 63, 94, 0.5);
+      background: rgba(244, 63, 94, 0.24);
+      border-color: #f43f5e;
+      box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
       transform: scale(1.06);
     }
 
+    /* 核心录制按钮：录制中态 (RECORDING) - 烈焰红呼吸脉冲底色 + 纯白实心方块停止键 ⏹ */
     .btn-record-pill.recording {
-      background: linear-gradient(135deg, #ef4444, #b91c1c);
-      animation: record-glow 1.5s infinite;
+      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+      color: #ffffff !important;
+      border: 2px solid #ffffff !important;
+      animation: record-glow 1.2s infinite;
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.8) !important;
     }
+
+    .btn-record-pill.recording:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+      transform: scale(1.08);
+      box-shadow: 0 0 28px rgba(239, 68, 68, 0.95) !important;
+    }
+
     @keyframes record-glow {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* 本地 file:// 协议麦克风提示条 */
+    .file-protocol-banner {
+      background: linear-gradient(90deg, rgba(217, 119, 6, 0.95), rgba(180, 83, 9, 0.95));
+      color: #fff;
+      padding: 6px 16px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 200;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .file-protocol-banner code {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+    .banner-switch-btn {
+      background: #fff;
+      color: #b45309;
+      font-weight: 700;
+      padding: 3px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .banner-switch-btn:hover {
+      background: #fef3c7;
+      transform: scale(1.04);
     }
 
     @keyframes pulse-attention {
@@ -1040,6 +1097,12 @@
 </head>
 <body>
 
+<!-- 本地 file:// 协议麦克风提示条（当以本地文件形式打开时展示） -->
+<div id="file-protocol-banner" class="file-protocol-banner">
+  <span>💡 当前为本地文件模式。Chrome 禁止 <code>file://</code> 调用麦克风，如需收音请切换至已启动的本地服务：</span>
+  <a href="http://localhost:8000/index.html" class="banner-switch-btn">一键切换到 localhost:8000 启用麦克风 ➔</a>
+</div>
+
 <!-- 1. 极简顶栏 -->
 <header id="main-header">
   <div class="brand">
@@ -1154,10 +1217,10 @@
       <div class="dock-drag-bar"></div>
     </div>
 
-    <!-- 核心录制按钮 -->
+    <!-- 核心录制按钮：未录制状态为双环 REC 靶心圈 -->
     <button class="btn-record-pill" id="btnRecord" title="开始/停止录制 (快捷键: 空格)">
       <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
-        <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="5" fill="#f43f5e"/><circle cx="12" cy="12" r="9" stroke="#f43f5e" stroke-width="2" fill="none"/></svg>
       </span>
       <span class="dock-tooltip" id="recordBtnText">开始录制 (空格)</span>
     </button>
@@ -1266,6 +1329,25 @@
       <div>• <strong>MacBook 外接屏合盖</strong>：若笔记本盖子闭合，macOS 会对自带镜头物理断电。只需掀开屏幕一条缝即可通电。</div>
       <div>• <strong>iPhone 连续互通相机</strong>：若用 iPhone 作为超清镜头，请将 iPhone 保持<strong>黑屏锁屏且横放固定</strong>。</div>
       <div>• <strong>快捷键</strong>：<span style="font-family: monospace; color: var(--accent);">空格</span> 录制/停止 / <span style="font-family: monospace; color: var(--accent);">R</span> 框选范围 / <span style="font-family: monospace; color: var(--accent);">H</span> 沉浸模式 / <span style="font-family: monospace; color: var(--accent);">S</span> 切换形状 / <span style="font-family: monospace; color: var(--accent);">C</span> 镜头开关 / <span style="font-family: monospace; color: var(--accent);">M</span> 麦克风开关。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. 本地 file:// 模式麦克风安全指引弹窗 -->
+<div class="modal-backdrop" id="mic-protocol-modal">
+  <div class="modal-card" style="max-width: 500px; text-align: center; align-items: center;">
+    <div style="font-size: 40px; margin-bottom: 2px;">🎙️ ➔ 🔒</div>
+    <div style="font-size: 16px; font-weight: 700; color: #f1f5f9;">本地文件模式无法开启麦克风</div>
+    <div style="font-size: 13px; line-height: 1.7; color: #cbd5e1; text-align: left; background: rgba(0, 0, 0, 0.25); padding: 14px 18px; border-radius: 12px; margin: 10px 0; width: 100%;">
+      <p style="margin-bottom: 8px;"><strong>原因排查（Chrome 浏览器内核规范）：</strong></p>
+      <p style="margin-bottom: 6px;">Chrome 出于系统级防窃听安全限制，<strong>强制禁止所有通过 <code>file:///</code> 本地静态文件打开的网页访问麦克风</strong>（浏览器底层直接抛出 NotAllowedError，不提供授权入口）。</p>
+      <p>💡 <strong>解决方案：</strong>后台已为您就绪安全的本地专属服务（<code>http://localhost:8000</code>），只需点击下方按钮，即可<strong>一键切换并正常开启麦克风</strong>！</p>
+    </div>
+    <div style="display: flex; gap: 12px; width: 100%; justify-content: center; margin-top: 6px;">
+      <button class="icon-btn" id="btnCloseMicProtocol" style="width: auto; padding: 0 16px; height: 38px;">关闭</button>
+      <a href="http://localhost:8000/index.html" class="btn-record-pill" style="width: auto; height: 38px; padding: 0 20px; border-radius: 999px; text-decoration: none; font-size: 13px; font-weight: 600; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; display: inline-flex; align-items: center; justify-content: center; border: none;">
+        立即切换到 localhost:8000 开启麦克风 ➔
+      </a>
     </div>
   </div>
 </div>
@@ -1535,17 +1617,31 @@
   async function setupMic() {
     if (isRequestingMic) return micStream;
     if (micStream && micStream.active && isMicActive) return micStream;
+
+    // 严谨排查：如果当前是以本地静态文件 file:// 打开，Chrome 会直接禁止麦克风访问
+    if (window.location.protocol === 'file:') {
+      const micProtoModal = document.getElementById('mic-protocol-modal');
+      if (micProtoModal) micProtoModal.style.display = 'flex';
+      showToast('⚠️ 本地 file:// 协议受浏览器安全限制，请切换到 localhost:8000');
+      return null;
+    }
+
     isRequestingMic = true;
 
     try {
       if (!micStream || !micStream.active) {
-        micStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+        } catch (constraintErr) {
+          console.warn('高级音频参数受阻，回退到基础模式 audio: true:', constraintErr);
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
       }
     } catch (err) {
       console.warn('Mic getUserMedia failed:', err);
@@ -2459,10 +2555,11 @@
     isRecording = false;
     btnRecord.classList.remove('recording');
     btnRecord.classList.remove('pulse-attention');
+    timerBadge.classList.remove('recording');
     dock.classList.remove('recording-active');
     if (recordBtnText) recordBtnText.innerText = '开始录制 (空格)';
     if (recordIconWrapper) {
-      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>';
+      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="5" fill="#f43f5e"/><circle cx="12" cy="12" r="9" stroke="#f43f5e" stroke-width="2" fill="none"/></svg>';
     }
     recDot.classList.remove('active');
     if (headerRecPill) headerRecPill.style.display = 'none';
@@ -2603,10 +2700,11 @@
 
     btnRecord.classList.add('recording');
     btnRecord.classList.remove('pulse-attention');
+    timerBadge.classList.add('recording');
     dock.classList.add('recording-active');
     if (recordBtnText) recordBtnText.innerText = '停止录制 (空格)';
     if (recordIconWrapper) {
-      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5" fill="#ffffff"/></svg>';
     }
     recDot.classList.add('active');
     if (headerRecPill) headerRecPill.style.display = 'flex';
@@ -2696,9 +2794,23 @@
     }
   });
 
-  /* 帮助弹窗 */
+  /* 帮助弹窗与本地模式弹窗 */
   btnHelp.addEventListener('click', () => helpModal.style.display = 'flex');
   btnCloseHelp.addEventListener('click', () => helpModal.style.display = 'none');
+
+  const micProtoModal = document.getElementById('mic-protocol-modal');
+  const btnCloseMicProtocol = document.getElementById('btnCloseMicProtocol');
+  if (btnCloseMicProtocol && micProtoModal) {
+    btnCloseMicProtocol.addEventListener('click', () => {
+      micProtoModal.style.display = 'none';
+    });
+  }
+
+  // 检测本地文件协议 file://，显示顶部指引横幅
+  if (window.location.protocol === 'file:') {
+    const fileBanner = document.getElementById('file-protocol-banner');
+    if (fileBanner) fileBanner.style.display = 'flex';
+  }
 
   /* 键盘快捷键 */
   window.addEventListener('keydown', (e) => {
@@ -2724,6 +2836,7 @@
       }
       previewModal.style.display = 'none';
       helpModal.style.display = 'none';
+      if (micProtoModal) micProtoModal.style.display = 'none';
       modalVideo.pause();
     }
   });
