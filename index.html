@@ -1326,12 +1326,12 @@
       <div class="dock-drag-bar"></div>
     </div>
 
-    <!-- 核心录制按钮：未录制状态为双环 REC 靶心圈 -->
-    <button class="btn-record-pill" id="btnRecord" title="开始/停止录制 (快捷键: 空格)">
+    <!-- 核心录制按钮：未录制状态为双环 REC 靶心圈 (支持右键切换画质) -->
+    <button class="btn-record-pill" id="btnRecord" title="开始/停止录制 (快捷键: 空格 · 右键选择画质)">
       <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
         <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="5" fill="#f43f5e"/><circle cx="12" cy="12" r="9" stroke="#f43f5e" stroke-width="2" fill="none"/></svg>
       </span>
-      <span class="dock-tooltip" id="recordBtnText">开始录制 (空格)</span>
+      <span class="dock-tooltip" id="recordBtnText">录制 (空格 · 右键换画质)</span>
     </button>
 
     <!-- 录制时间显示 -->
@@ -1610,7 +1610,14 @@
 
   let selectedCamDeviceId = null;
   let selectedMicDeviceId = null;
-  let currentMenuType = null; // 'cam' | 'mic'
+  let currentMenuType = null; // 'cam' | 'mic' | 'quality'
+
+  let currentQuality = '1080p';
+  const qualityPresets = {
+    '720p': { width: 1280, height: 720, fps: 30, bitrate: 3000000, label: '720P 流畅 (30 FPS)' },
+    '1080p': { width: 1920, height: 1080, fps: 60, bitrate: 8000000, label: '1080P 超清 (60 FPS)' },
+    '2k': { width: 2560, height: 1440, fps: 60, bitrate: 16000000, label: '2K 原画 (60 FPS)' }
+  };
 
   function showToast(msg) {
     toast.innerText = msg;
@@ -2113,8 +2120,8 @@
     }
     currentMenuType = type;
     deviceMenu.style.display = 'flex';
-    dpmTitle.innerText = type === 'cam' ? '📷 选择摄像头设备' : '🎙️ 选择麦克风设备';
-    dpmList.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #94a3b8; text-align: center;">正在扫描硬件设备...</div>';
+    dpmTitle.innerText = type === 'cam' ? '📷 选择摄像头设备' : (type === 'mic' ? '🎙️ 选择麦克风设备' : '🎬 选择录制画质');
+    dpmList.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #94a3b8; text-align: center;">正在载入选项...</div>';
 
     positionDeviceMenu(anchorElement, mouseEvent);
     await populateDeviceList(type);
@@ -2162,6 +2169,40 @@
   }
 
   async function populateDeviceList(type) {
+    if (type === 'quality') {
+      dpmList.innerHTML = '';
+      const qualities = [
+        { id: '1080p', label: '1080P 超清', desc: '1920×1080 · 60 FPS · 8 Mbps (推荐)', icon: '🎬' },
+        { id: '720p', label: '720P 流畅', desc: '1280×720 · 30 FPS · 3 Mbps (小体积)', icon: '⚡' },
+        { id: '2k', label: '2K 原画', desc: '2560×1440 · 60 FPS · 16 Mbps (极致细节)', icon: '🖥️' }
+      ];
+
+      qualities.forEach(q => {
+        const item = document.createElement('div');
+        item.className = 'dpm-item';
+        const isCurrent = currentQuality === q.id;
+        if (isCurrent) item.classList.add('active');
+
+        item.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+            <div style="font-weight: 600; font-size: 12px;">${q.icon} ${q.label}</div>
+            <div style="font-size: 10px; opacity: 0.7;">${q.desc}</div>
+          </div>
+          <span class="dpm-item-check">${isCurrent ? '✓' : ''}</span>
+        `;
+
+        item.addEventListener('click', () => {
+          currentQuality = q.id;
+          const conf = qualityPresets[q.id];
+          showToast(`录制画质已设为: ${conf.label}`);
+          closeDeviceMenu();
+        });
+
+        dpmList.appendChild(item);
+      });
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
       dpmList.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #f87171; text-align: center;">浏览器不支持设备枚举</div>';
       return;
@@ -2386,6 +2427,22 @@
     btnDockMic.addEventListener(evt, () => clearTimeout(micLongPressTimer));
   });
 
+  // 录制按钮支持右键/长按切换画质
+  btnRecord.addEventListener('contextmenu', (e) => {
+    if (!isRecording) {
+      openDeviceMenu('quality', btnRecord, e);
+    }
+  });
+
+  let recLongPressTimer = null;
+  btnRecord.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || isRecording) return;
+    recLongPressTimer = setTimeout(() => openDeviceMenu('quality', btnRecord), 450);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+    btnRecord.addEventListener(evt, () => clearTimeout(recLongPressTimer));
+  });
+
   if (btnHoverSwitchCam) {
     btnHoverSwitchCam.addEventListener('click', (e) => openDeviceMenu('cam', btnHoverSwitchCam, e));
   }
@@ -2402,7 +2459,7 @@
 
   document.addEventListener('pointerdown', (e) => {
     if (deviceMenu && deviceMenu.style.display === 'flex') {
-      if (!deviceMenu.contains(e.target) && !btnDockCam.contains(e.target) && !btnDockMic.contains(e.target) && (!btnHoverSwitchCam || !btnHoverSwitchCam.contains(e.target))) {
+      if (!deviceMenu.contains(e.target) && !btnDockCam.contains(e.target) && !btnDockMic.contains(e.target) && !btnRecord.contains(e.target) && (!btnHoverSwitchCam || !btnHoverSwitchCam.contains(e.target))) {
         closeDeviceMenu();
       }
     }
@@ -3047,11 +3104,12 @@
       isCropEditing = false;
       if (cropOverlay) cropOverlay.classList.remove('active');
     }
+    const qConfig = qualityPresets[currentQuality] || qualityPresets['1080p'];
     recordedChunks = [];
-    canvas.width = 1920;
-    canvas.height = 1080;
+    canvas.width = qConfig.width;
+    canvas.height = qConfig.height;
 
-    // 先画出首帧真实画面，确保 canvas.captureStream(60) 初始就有关键帧
+    // 先画出首帧真实画面，确保 canvas.captureStream 初始就有关键帧
     renderCompositeFrame();
 
     let hasAudio = false;
@@ -3094,7 +3152,7 @@
       }
     }
 
-    const stream = canvas.captureStream(60);
+    const stream = canvas.captureStream(qConfig.fps);
     // 关键：只有在有真实音频源时才向 stream 添加音频轨道！
     // 彻底解决无声录制时因空音频轨导致 Chrome 播放器等待时钟卡死在 00:00 的问题
     if (hasAudio && recDest) {
@@ -3102,7 +3160,7 @@
     }
 
     const mimeType = getSupportedMimeType(hasAudio);
-    const options = mimeType ? { mimeType, videoBitsPerSecond: 8000000 } : { videoBitsPerSecond: 8000000 };
+    const options = mimeType ? { mimeType, videoBitsPerSecond: qConfig.bitrate } : { videoBitsPerSecond: qConfig.bitrate };
 
     try {
       mediaRecorder = new MediaRecorder(stream, options);
@@ -3161,7 +3219,7 @@
       };
 
       const mb = (recordedBlob.size / (1024 * 1024)).toFixed(1);
-      recInfoText.innerText = `大小: ${mb} MB · 时长: ${timerDisplay.innerText}`;
+      recInfoText.innerText = `${qConfig.label.split(' ')[0]} · 大小: ${mb} MB · 时长: ${timerDisplay.innerText}`;
       previewModal.style.display = 'flex';
 
       resetRecordUI();
