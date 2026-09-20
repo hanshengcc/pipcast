@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PipCast — 自由形状悬浮镜头 & 零安装轻量录屏工具</title>
+  <title>PipCast</title>
   <style>
     :root {
-      --bg-dark: #070a12;
-      --card-bg: rgba(18, 24, 38, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
+      /* 舒适柔和的中性深灰配色，避免纯黑死板 */
+      --bg-base: #181b24;
+      --bg-surface: #222634;
+      --card-bg: rgba(34, 38, 52, 0.82);
+      --card-border: rgba(255, 255, 255, 0.1);
       --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
-      --accent-green: #10b981;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --accent-green: #34d399;
       --accent-red: #f43f5e;
-      --accent-purple: #a855f7;
-      --accent-amber: #f59e0b;
-      --text: #f8fafc;
+      --accent-purple: #a78bfa;
+      --text: #f1f5f9;
       --text-muted: #94a3b8;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
@@ -23,9 +24,9 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: var(--bg-dark);
+      background: radial-gradient(circle at 50% 30%, #252a3a 0%, #181b24 100%);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -33,14 +34,14 @@
       user-select: none;
     }
 
-    /* 1. Header Navigation */
+    /* 极简顶栏 */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 28px;
-      background: rgba(10, 15, 29, 0.75);
-      backdrop-filter: blur(20px);
+      padding: 12px 24px;
+      background: rgba(24, 27, 36, 0.6);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--card-border);
       z-index: 100;
       transition: transform 0.3s, opacity 0.3s;
@@ -49,53 +50,40 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
-      border-radius: 9px;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
-      color: #fff;
-      font-size: 16px;
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
     }
+
+    .logo-icon svg { width: 16px; height: 16px; fill: #fff; }
 
     .brand-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #fff, #94a3b8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-tag {
-      font-size: 11px;
-      padding: 2px 8px;
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--accent);
-      border-radius: 999px;
+      font-size: 16px;
       font-weight: 700;
-      border: 1px solid rgba(56, 189, 248, 0.25);
+      letter-spacing: -0.01em;
+      color: #f8fafc;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    /* 2. Workspace / Stage */
+    /* 主画布空间 */
     #stage-container {
       flex: 1;
       position: relative;
-      background: radial-gradient(circle at center, #10172a 0%, #060911 100%);
+      background: transparent;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -109,108 +97,93 @@
       display: none;
     }
 
-    /* Welcome Hero when no screen selected */
+    /* 极简中心引导卡（无多余营销文字） */
     #welcome-hero {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 40px 20px;
-      max-width: 720px;
       z-index: 10;
-    }
-
-    .hero-badge {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--accent);
-      background: rgba(56, 189, 248, 0.1);
-      padding: 6px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      margin-bottom: 20px;
-    }
-
-    .hero-h1 {
-      font-size: 42px;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.03em;
-      margin-bottom: 16px;
-    }
-
-    .hero-h1 span {
-      background: linear-gradient(135deg, var(--accent), #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-desc {
-      font-size: 15px;
-      line-height: 1.7;
-      color: var(--text-muted);
-      margin-bottom: 32px;
-      max-width: 580px;
-    }
-
-    .hero-cards-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-      width: 100%;
-      margin-bottom: 32px;
     }
 
-    .hero-card {
+    .minimal-picker-card {
       background: var(--card-bg);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px 16px;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      border-radius: 20px;
+      padding: 32px 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      gap: 20px;
+      max-width: 440px;
+      text-align: center;
     }
 
-    .hero-card:hover {
+    .picker-btn-grid {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .action-card-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px 14px;
+      color: #f1f5f9;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .action-card-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-card-btn.primary {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(99, 102, 241, 0.18));
       border-color: rgba(56, 189, 248, 0.4);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .action-card-btn.primary:hover {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(99, 102, 241, 0.28));
+      border-color: var(--accent);
     }
 
-    .hero-card-icon {
-      font-size: 24px;
-      margin-bottom: 4px;
+    .action-card-btn svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--accent);
+      stroke-width: 1.8;
+      fill: none;
     }
 
-    .hero-card-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
+    .action-card-btn span {
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .hero-card-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* 3. Floating Camera Bubble */
+    /* 悬浮人脸气泡 */
     #cam-bubble {
       position: absolute;
-      bottom: 40px;
-      right: 40px;
+      bottom: 36px;
+      right: 36px;
       width: 180px;
       height: 180px;
       cursor: grab;
       z-index: 50;
-      transition: box-shadow 0.2s, outline 0.2s;
       touch-action: none;
+      transition: box-shadow 0.25s ease;
     }
 
     #cam-bubble:active {
@@ -222,7 +195,7 @@
       height: 100%;
       position: relative;
       overflow: hidden;
-      background: #020617;
+      background: #1c202d;
       transition: clip-path 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.3s;
     }
 
@@ -234,44 +207,44 @@
       display: none;
     }
 
-    /* Camera Shapes */
+    /* 气泡各种形状 */
     .shape-circle { border-radius: 50%; }
     .shape-squircle { border-radius: 28%; }
-    .shape-rounded { border-radius: 18px; }
+    .shape-rounded { border-radius: 20px; }
     .shape-hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
     .shape-oval { border-radius: 40% / 60%; }
 
-    /* Border Glows */
+    /* 发光边框 */
     .border-glow-blue {
-      box-shadow: 0 0 0 3px var(--accent), 0 10px 30px rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 0 3px var(--accent), 0 12px 28px rgba(56, 189, 248, 0.3);
     }
     .border-glow-purple {
-      box-shadow: 0 0 0 3px var(--accent-purple), 0 10px 30px rgba(168, 85, 247, 0.35);
+      box-shadow: 0 0 0 3px var(--accent-purple), 0 12px 28px rgba(167, 139, 250, 0.3);
     }
     .border-glow-green {
-      box-shadow: 0 0 0 3px var(--accent-green), 0 10px 30px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 0 0 3px var(--accent-green), 0 12px 28px rgba(52, 211, 153, 0.3);
     }
     .border-glow-none {
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
 
-    /* Bubble Quick Hover Toolbar */
+    /* 悬停微缩图标条 */
     .cam-hover-tools {
       position: absolute;
-      top: -46px;
+      top: -42px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(30, 35, 48, 0.9);
       backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       border-radius: 999px;
-      padding: 4px 8px;
+      padding: 3px 6px;
       display: none;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       white-space: nowrap;
       z-index: 60;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
     #cam-bubble:hover .cam-hover-tools {
@@ -282,11 +255,22 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
       cursor: pointer;
-      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .cam-tool-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
     }
 
     .cam-tool-btn:hover {
@@ -294,7 +278,7 @@
       background: rgba(255, 255, 255, 0.12);
     }
 
-    /* Camera Placeholder (when camera off or waiting) */
+    /* 摄像头未开启时的占位状态 */
     .cam-placeholder {
       position: absolute;
       inset: 0;
@@ -302,53 +286,49 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at center, #1e293b, #090d16);
+      background: radial-gradient(circle at center, #272d3e, #1a1e2a);
       color: var(--text-muted);
-      text-align: center;
-      padding: 16px;
-      z-index: 5;
-      user-select: none;
       cursor: pointer;
+      transition: background 0.2s;
+      padding: 12px;
+      text-align: center;
     }
 
     .cam-placeholder:hover {
-      background: radial-gradient(circle at center, #27354f, #0c121e);
+      background: radial-gradient(circle at center, #30374c, #1f2331);
+      color: var(--text);
     }
 
-    .placeholder-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-      opacity: 0.8;
+    .cam-placeholder svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      fill: none;
+      margin-bottom: 6px;
+      opacity: 0.85;
     }
 
     .placeholder-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #cbd5e1;
-      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 600;
     }
 
-    .placeholder-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    /* 4. Floating Master Control Dock (Bottom) */
+    /* 极简精致底部控制 Dock（纯图标设计，如 Dynamic Island） */
     #dock {
       position: absolute;
-      bottom: 24px;
+      bottom: 22px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 999px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      gap: 8px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
       z-index: 90;
       transition: opacity 0.3s, transform 0.3s;
     }
@@ -356,138 +336,147 @@
     #dock.hidden-ui {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(30px);
-    }
-
-    .dock-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      transform: translateX(-50%) translateY(24px);
     }
 
     .dock-divider {
       width: 1px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.1);
+      height: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      margin: 0 2px;
     }
 
-    /* Buttons */
-    button {
+    /* 精致轻量图标按钮 */
+    .icon-btn {
       font-family: inherit;
       font-size: 13px;
-      font-weight: 600;
-      border: none;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border: 1px solid transparent;
       border-radius: 999px;
-      padding: 8px 16px;
+      padding: 7px 12px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
+      transition: all 0.18s ease;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #2563eb);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
     }
-    .btn-primary:hover {
-      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
       transform: translateY(-1px);
     }
 
-    .btn-record {
-      background: linear-gradient(135deg, var(--accent-red), #e11d48);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(244, 63, 94, 0.4);
-      font-size: 14px;
-      padding: 9px 20px;
-    }
-    .btn-record.recording {
-      animation: pulse-red 1.5s infinite;
-    }
-    @keyframes pulse-red {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
-      70% { box-shadow: 0 0 0 12px rgba(244, 63, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-    }
-
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-    }
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-    .btn-ghost.active {
-      background: rgba(56, 189, 248, 0.15);
+    .icon-btn.active {
+      background: var(--accent-soft);
       color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-color: rgba(56, 189, 248, 0.35);
     }
 
-    /* Audio Meter Component */
-    .audio-meter-box {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 999px;
-      font-size: 12px;
-      color: var(--text-muted);
+    .icon-btn-pure {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 50%;
     }
 
-    .audio-bars {
+    /* 麦克风跳动电平 */
+    .audio-meter {
       display: flex;
       align-items: flex-end;
       gap: 2px;
-      height: 14px;
-      width: 24px;
+      height: 12px;
+      width: 16px;
+      margin-left: 2px;
     }
 
-    .audio-bar-col {
-      width: 4px;
-      background: rgba(255, 255, 255, 0.2);
+    .ab-bar {
+      width: 3px;
+      background: rgba(255, 255, 255, 0.25);
       border-radius: 2px;
-      height: 20%;
-      transition: height 0.08s ease;
+      height: 25%;
+      transition: height 0.08s ease, background-color 0.1s;
     }
+    .ab-bar.active { background: var(--accent-green); }
 
-    .audio-bar-col.active {
-      background: var(--accent-green);
-    }
-
-    /* Timer Display */
-    .rec-timer {
+    /* 录制时间显示 */
+    .timer-badge {
       font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 14px;
-      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      padding: 0 4px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .rec-dot {
-      width: 8px;
-      height: 8px;
+    .rec-pulse-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent-red);
       display: none;
     }
-    .rec-dot.active {
+    .rec-pulse-dot.active {
       display: inline-block;
-      animation: blink 1s infinite;
+      animation: pulse-dot 1s infinite;
     }
-    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes pulse-dot { 50% { opacity: 0.2; } }
 
-    /* 5. Giant Countdown Overlay (3... 2... 1...) */
+    /* 核心录制按钮 */
+    .btn-record-pill {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35);
+      transition: all 0.2s;
+    }
+
+    .btn-record-pill svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .btn-record-pill:hover {
+      box-shadow: 0 6px 18px rgba(244, 63, 94, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-record-pill.recording {
+      animation: record-glow 1.6s infinite;
+    }
+    @keyframes record-glow {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
+    /* 3秒倒计时浮层 */
     #countdown-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(7, 10, 18, 0.85);
-      backdrop-filter: blur(20px);
+      background: rgba(24, 27, 36, 0.7);
+      backdrop-filter: blur(16px);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -495,34 +484,24 @@
       z-index: 300;
     }
 
-    .countdown-number {
-      font-size: 130px;
-      font-weight: 900;
-      color: #fff;
+    .countdown-num {
+      font-size: 100px;
+      font-weight: 800;
+      color: var(--accent);
       line-height: 1;
-      animation: count-pop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      animation: count-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     @keyframes count-pop {
-      0% { transform: scale(0.4); opacity: 0; }
-      50% { transform: scale(1.1); opacity: 1; }
+      0% { transform: scale(0.6); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
 
-    .countdown-hint {
-      margin-top: 24px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    /* 6. Modals (Preview & Diagnostics) */
+    /* 预览导出弹窗 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(15, 18, 25, 0.75);
       backdrop-filter: blur(16px);
       display: none;
       align-items: center;
@@ -530,318 +509,243 @@
       z-index: 250;
     }
 
-    .modal-content {
-      background: #0d1322;
+    .modal-card {
+      background: #1e222e;
       border: 1px solid var(--card-border);
-      border-radius: 20px;
+      border-radius: 18px;
       width: 90vw;
-      max-width: 840px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 28px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      max-width: 760px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
-    .modal-header {
+    .modal-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .video-preview {
+    .video-preview-player {
       width: 100%;
-      max-height: 480px;
-      border-radius: 12px;
+      max-height: 440px;
+      border-radius: 10px;
       background: #000;
     }
 
-    .modal-actions {
+    .modal-bottom {
       display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-    }
-
-    /* Diag Item Cards */
-    .diag-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-
-    .diag-item {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-size: 13px;
-    }
-    .diag-item:last-child { border-bottom: none; }
-
-    .diag-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-    }
-    .badge-ok { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .badge-err { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-
-    .code-inline {
-      font-family: var(--font-mono);
-      background: rgba(255, 255, 255, 0.08);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
     }
 
-    /* Toast Notifications */
+    /* 极简 Toast */
     #toast {
       position: fixed;
-      top: 24px;
+      top: 20px;
       left: 50%;
-      transform: translateX(-50%) translateY(-50px);
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
+      transform: translateX(-50%) translateY(-40px);
+      background: rgba(30, 35, 48, 0.95);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--card-border);
       color: #fff;
-      padding: 10px 22px;
+      padding: 8px 18px;
       border-radius: 999px;
       font-size: 13px;
-      font-weight: 500;
       opacity: 0;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 400;
       pointer-events: none;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
     #toast.show {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
 
-    /* Hidden Canvas for Mixing Recording */
+    /* 离屏混合 Canvas */
     #composite-canvas { display: none; }
   </style>
 </head>
 <body>
 
-<!-- 1. Header -->
+<!-- 1. 极简顶栏 -->
 <header id="main-header">
   <div class="brand">
-    <div class="logo-icon">P</div>
+    <div class="logo-icon">
+      <!-- 极简录制镜头 SVG 图标 -->
+      <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="3" ry="3"/></svg>
+    </div>
     <span class="brand-title">PipCast</span>
-    <span class="brand-tag">v1.0 Local Studio</span>
   </div>
 
   <div class="header-actions">
-    <button class="btn-ghost" id="btnHelpDiag">
-      🔍 硬件诊断 & 排查
+    <button class="icon-btn icon-btn-pure" id="btnHelp" title="硬件提示与排查">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </button>
-    <button class="btn-ghost" id="btnCleanMode" title="快捷键: H">
-      👁️ 沉浸模式 (H)
+    <button class="icon-btn icon-btn-pure" id="btnCleanMode" title="沉浸展示模式 (快捷键: H)">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
-    <a href="https://github.com/ThisMac/pipcast" target="_blank" style="text-decoration: none;">
-      <button class="btn-ghost">⭐ GitHub</button>
-    </a>
   </div>
 </header>
 
-<!-- 2. Workspace Stage -->
+<!-- 2. 工作台画布 -->
 <main id="stage-container">
-  <!-- Screen Video Layer -->
+  <!-- 屏幕共享渲染层 -->
   <video id="screen-video" autoplay playsinline muted></video>
 
-  <!-- Welcome Hero (Shown when no screen is selected) -->
+  <!-- 中心轻量卡片（未共享屏幕时显示） -->
   <div id="welcome-hero">
-    <div class="hero-badge">零安装 · 100% 离线隐私 · 开源 Loom 替代</div>
-    <h1 class="hero-h1">自由悬浮人像，<span>随心所欲录制。</span></h1>
-    <p class="hero-desc">
-      无需安装多 GB 的重型软件，无需付费订阅。在浏览器中一键录制高清屏幕、自由切换多边形镜头气泡，并实时混音录制你的麦克风原声。
-    </p>
-
-    <!-- Quick Mode Selector Cards -->
-    <div class="hero-cards-grid">
-      <div class="hero-card" id="cardScreenAndCam">
-        <div class="hero-card-icon">🖥️ + 📷</div>
-        <div class="hero-card-title">屏幕 + 镜头气泡</div>
-        <div class="hero-card-desc">录制演讲幻灯片、代码走查或软件演示，附带自由移动的人像气泡。</div>
-      </div>
-
-      <div class="hero-card" id="cardCamOnly">
-        <div class="hero-card-icon">📹</div>
-        <div class="hero-card-title">纯镜头备忘录</div>
-        <div class="hero-card-desc">无需共享屏幕，直接出镜录制视频随笔、个人陈述或自我介绍。</div>
-      </div>
-
-      <div class="hero-card" id="cardScreenOnly">
-        <div class="hero-card-icon">💻</div>
-        <div class="hero-card-title">纯屏幕录制</div>
-        <div class="hero-card-desc">纯净捕获应用窗口、浏览器标签或全屏幕，配合麦克风画外音。</div>
+    <div class="minimal-picker-card">
+      <div style="font-size: 15px; font-weight: 600; color: #f1f5f9;">选择录制模式</div>
+      <div class="picker-btn-grid">
+        <button class="action-card-btn primary" id="heroBtnScreen">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>录制屏幕</span>
+        </button>
+        <button class="action-card-btn" id="heroBtnCam">
+          <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span>纯镜头出镜</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- 3. Floating Camera Bubble -->
+  <!-- 3. 悬浮人像镜头气泡 -->
   <div id="cam-bubble" class="border-glow-blue">
-    <!-- Hover Quick Tools Pill -->
+    <!-- 悬停快捷工具条（微缩图标） -->
     <div class="cam-hover-tools">
-      <button class="cam-tool-btn" id="btnCycleShape" title="切换形状 (快捷键: S)">🔮 形状</button>
-      <button class="cam-tool-btn" id="btnToggleMirror" title="水平镜像翻转">🪞 镜像</button>
-      <button class="cam-tool-btn" id="btnSwitchCamQuick" title="切换前后置或 iPhone 相机">🔄 切镜头</button>
-      <button class="cam-tool-btn" id="btnCycleBorder" title="切换发光边框">✨ 边框</button>
+      <button class="cam-tool-btn" id="btnHoverShape" title="切换形状 (快捷键: S)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+      </button>
+      <button class="cam-tool-btn" id="btnHoverMirror" title="水平镜像翻转">
+        <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+      </button>
+      <button class="cam-tool-btn" id="btnHoverBorder" title="切换发光边框">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
     </div>
 
-    <!-- Inner Mask Wrapper -->
+    <!-- 气泡形状遮罩层 -->
     <div class="cam-inner-wrapper shape-circle" id="cam-wrapper">
       <video id="cam-video" autoplay playsinline muted></video>
-      
-      <!-- Placeholder when off -->
       <div class="cam-placeholder" id="cam-placeholder">
-        <div class="placeholder-icon">📷</div>
-        <div class="placeholder-title" id="placeholder-title">点击开启摄像头</div>
-        <div class="placeholder-hint" id="placeholder-hint">支持 Mac 自带 / iPhone 连续互通</div>
+        <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        <span class="placeholder-title" id="placeholder-title">开启镜头</span>
       </div>
     </div>
   </div>
 
-  <!-- 4. Master Control Dock (Bottom Center) -->
+  <!-- 4. 底部极简图标 Dock 栏 -->
   <div id="dock">
-    <!-- Screen & Mode Group -->
-    <div class="dock-group">
-      <button class="btn-ghost" id="btnSelectScreen">
-        🖥️ <span>选择屏幕</span>
-      </button>
-      <button class="btn-ghost" id="btnToggleCam">
-        📷 <span>镜头: 关</span>
-      </button>
-      <button class="btn-ghost" id="btnSwitchDevice" style="display: none;">
-        🔄 <span>换镜头</span>
-      </button>
-    </div>
+    <!-- 屏幕选择 -->
+    <button class="icon-btn" id="btnDockScreen" title="选择要共享捕获的屏幕/窗口/标签页">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span id="screenStatusText">屏幕</span>
+    </button>
+
+    <!-- 镜头开关 -->
+    <button class="icon-btn" id="btnDockCam" title="开关悬浮摄像头 (快捷键: C)">
+      <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <span id="camStatusText">镜头</span>
+    </button>
+
+    <!-- 形状切换 -->
+    <button class="icon-btn icon-btn-pure" id="btnDockShape" title="切换几何形状 (快捷键: S)">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 2 22 22 22"/></svg>
+    </button>
+
+    <!-- 尺寸缩放 -->
+    <button class="icon-btn icon-btn-pure" id="btnDockSize" title="切换气泡大小 (或在气泡上滑动滚轮)">
+      <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
 
     <div class="dock-divider"></div>
 
-    <!-- Shape & Style Group -->
-    <div class="dock-group">
-      <button class="btn-ghost" id="btnShapeSelector">
-        🔮 形状: 圆形
-      </button>
-      <button class="btn-ghost" id="btnCamSize">
-        📐 大小: 180px
-      </button>
-    </div>
-
-    <div class="dock-divider"></div>
-
-    <!-- Audio Meter & Mic -->
-    <div class="dock-group">
-      <button class="btn-ghost" id="btnToggleMic">
-        🎙️ <span>麦克风: 开</span>
-      </button>
-      <div class="audio-meter-box" title="实时麦克风收音电平">
-        <div class="audio-bars">
-          <div class="audio-bar-col" id="ab1"></div>
-          <div class="audio-bar-col" id="ab2"></div>
-          <div class="audio-bar-col" id="ab3"></div>
-          <div class="audio-bar-col" id="ab4"></div>
-        </div>
+    <!-- 麦克风与动态跳动电平 -->
+    <button class="icon-btn" id="btnDockMic" title="开关麦克风收音 (快捷键: M)">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      <div class="audio-meter">
+        <div class="ab-bar" id="ab1"></div>
+        <div class="ab-bar" id="ab2"></div>
+        <div class="ab-bar" id="ab3"></div>
       </div>
-    </div>
+    </button>
 
     <div class="dock-divider"></div>
 
-    <!-- Record Trigger & Timer -->
-    <div class="dock-group">
-      <div class="rec-timer">
-        <span class="rec-dot" id="rec-dot"></span>
-        <span id="timer-display">00:00</span>
-      </div>
-      <button class="btn-record" id="btnRecord">
-        🔴 <span>开始录制</span>
-      </button>
+    <!-- 录制时间显示 -->
+    <div class="timer-badge">
+      <span class="rec-pulse-dot" id="rec-dot"></span>
+      <span id="timer-display">00:00</span>
     </div>
+
+    <!-- 核心录制按钮 -->
+    <button class="btn-record-pill" id="btnRecord">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+      <span id="recordBtnText">录制</span>
+    </button>
   </div>
 </main>
 
-<!-- 5. Countdown Overlay -->
+<!-- 5. 3秒沉浸式倒计时 -->
 <div id="countdown-overlay">
-  <div class="countdown-number" id="countdown-number">3</div>
-  <div class="countdown-hint">深呼吸，即将开始录制... <button class="btn-ghost" id="btnSkipCountdown" style="margin-left: 8px;">跳过倒计时</button></div>
+  <div class="countdown-num" id="countdown-num">3</div>
 </div>
 
-<!-- 6. Preview Modal -->
+<!-- 6. 录制完成预览弹窗 -->
 <div class="modal-backdrop" id="preview-modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">🎉 录制完成！预览与下载</div>
-      <button class="btn-ghost" id="btnCloseModal">✕</button>
+  <div class="modal-card">
+    <div class="modal-top">
+      <span style="font-weight: 600; font-size: 15px;">🎉 录制完成</span>
+      <button class="icon-btn icon-btn-pure" id="btnCloseModal">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
-    <video class="video-preview" id="modal-video-player" controls autoplay></video>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-size: 13px; color: var(--text-muted);" id="rec-meta-info">
-        格式: WebM/MP4 (60 FPS) · 100% 本地生成无上传
-      </div>
-      <div class="modal-actions">
-        <button class="btn-ghost" id="btnDiscard">🗑️ 放弃重新录</button>
-        <button class="btn-primary" id="btnDownload">⬇️ 下载高清视频文件</button>
+    <video class="video-preview-player" id="modal-video" controls autoplay></video>
+    <div class="modal-bottom">
+      <span style="font-size: 12px; color: var(--text-muted);" id="rec-info-text">本地生成 · 60 FPS</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="icon-btn" id="btnDiscard">🗑️ 放弃</button>
+        <button class="btn-record-pill" id="btnDownload" style="background: linear-gradient(135deg, #38bdf8, #2563eb);">
+          ⬇️ 下载文件
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 7. Diagnostics & Help Modal -->
-<div class="modal-backdrop" id="diag-modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">🔍 摄像头与屏幕硬件诊断助手</div>
-      <button class="btn-ghost" id="btnCloseDiag">✕</button>
+<!-- 7. 轻量硬件提示弹窗 -->
+<div class="modal-backdrop" id="help-modal">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-top">
+      <span style="font-weight: 600; font-size: 15px;">💡 硬件与使用提示</span>
+      <button class="icon-btn icon-btn-pure" id="btnCloseHelp">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
-    
-    <div id="diag-body">
-      <!-- Injected via JavaScript -->
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-ghost" id="btnDiagRescan">🔄 重新扫描硬件</button>
-      <button class="btn-primary" id="btnCloseDiagDone">我知道了</button>
+    <div style="font-size: 13px; line-height: 1.7; color: #cbd5e1; display: flex; flex-direction: column; gap: 10px;">
+      <div>• <strong>本地文件即开即用</strong>：本应用是 100% 纯本地单文件，直接在浏览器双击打开即可正常调用摄像头与屏幕，无需额外启动任何本地服务器。</div>
+      <div>• <strong>MacBook 外接屏合盖</strong>：若笔记本盖子闭合，macOS 会对自带镜头物理断电。只需掀开屏幕一条缝即可通电。</div>
+      <div>• <strong>iPhone 连续互通相机</strong>：若用 iPhone 作为超清镜头，请将 iPhone 保持<strong>黑屏锁屏且横放固定</strong>。</div>
+      <div>• <strong>快捷键</strong>：<span style="font-family: monospace; color: var(--accent);">H</span> 沉浸模式 / <span style="font-family: monospace; color: var(--accent);">S</span> 切换形状 / <span style="font-family: monospace; color: var(--accent);">C</span> 镜头开关 / <span style="font-family: monospace; color: var(--accent);">M</span> 麦克风静音。</div>
     </div>
   </div>
 </div>
 
-<!-- Hidden Canvas for Mixing -->
+<!-- 离屏渲染与混合画布 -->
 <canvas id="composite-canvas"></canvas>
 
-<!-- Toast -->
-<div id="toast">提示信息</div>
+<!-- 浮动通知 Toast -->
+<div id="toast">已就绪</div>
 
 <script>
   /* =========================================================
-     PipCast Studio Core Engine
-     Architecture:
-     1. State Management
-     2. Camera Controller (Resilient & Apple Continuity Aware)
-     3. Screen Capture Controller (Non-blocking & Safe)
-     4. Web Audio Mixer & Realtime Level Visualizer
-     5. 60 FPS HTML5 Canvas Compositing Engine
-     6. MediaRecorder Pipeline
+     PipCast — 纯本地极简核心 (100% 本地文件双击即用)
      ========================================================= */
 
-  // State
   let screenStream = null;
   let camStream = null;
   let micStream = null;
@@ -850,36 +754,28 @@
   let mediaRecorder = null;
   let recordedChunks = [];
   let recordedBlob = null;
-  
+
   let isCameraActive = false;
   let isMicActive = true;
   let isRecording = false;
   let isCleanMode = false;
   let isMirrored = true;
-  let isCameraOnlyMode = false;
   let isSelectingScreen = false;
-  let lastCameraError = null;
 
   let recordSeconds = 0;
-  let recordTimerInterval = null;
-  let countdownTimerInterval = null;
+  let timerInterval = null;
 
-  // Shapes & Visuals
+  // 形状与样式
   const shapes = ['shape-circle', 'shape-squircle', 'shape-rounded', 'shape-hexagon', 'shape-oval'];
-  const shapeNames = ['圆形', '超椭圆', '微圆角', '六边形', '椭圆'];
   let currentShapeIdx = 0;
 
   const borders = ['border-glow-blue', 'border-glow-purple', 'border-glow-green', 'border-glow-none'];
   let currentBorderIdx = 0;
 
   const sizes = [120, 180, 240, 320];
-  let currentSizeIdx = 1; // 180px default
+  let currentSizeIdx = 1; // 180px
 
-  // Available video input devices
-  let availableCameras = [];
-  let currentCameraIndex = 0;
-
-  // DOM Elements
+  // DOM 元素引用
   const stage = document.getElementById('stage-container');
   const screenVideo = document.getElementById('screen-video');
   const welcomeHero = document.getElementById('welcome-hero');
@@ -888,48 +784,42 @@
   const camVideo = document.getElementById('cam-video');
   const camPlaceholder = document.getElementById('cam-placeholder');
   const placeholderTitle = document.getElementById('placeholder-title');
-  const placeholderHint = document.getElementById('placeholder-hint');
 
   const mainHeader = document.getElementById('main-header');
   const dock = document.getElementById('dock');
-  const btnSelectScreen = document.getElementById('btnSelectScreen');
-  const btnToggleCam = document.getElementById('btnToggleCam');
-  const btnSwitchDevice = document.getElementById('btnSwitchDevice');
-  const btnShapeSelector = document.getElementById('btnShapeSelector');
-  const btnCamSize = document.getElementById('btnCamSize');
-  const btnToggleMic = document.getElementById('btnToggleMic');
+  const btnDockScreen = document.getElementById('btnDockScreen');
+  const btnDockCam = document.getElementById('btnDockCam');
+  const btnDockShape = document.getElementById('btnDockShape');
+  const btnDockSize = document.getElementById('btnDockSize');
+  const btnDockMic = document.getElementById('btnDockMic');
   const btnRecord = document.getElementById('btnRecord');
+  const recordBtnText = document.getElementById('recordBtnText');
   const recDot = document.getElementById('rec-dot');
   const timerDisplay = document.getElementById('timer-display');
+  const screenStatusText = document.getElementById('screenStatusText');
+  const camStatusText = document.getElementById('camStatusText');
 
-  const btnCycleShape = document.getElementById('btnCycleShape');
-  const btnToggleMirror = document.getElementById('btnToggleMirror');
-  const btnSwitchCamQuick = document.getElementById('btnSwitchCamQuick');
-  const btnCycleBorder = document.getElementById('btnCycleBorder');
+  const heroBtnScreen = document.getElementById('heroBtnScreen');
+  const heroBtnCam = document.getElementById('heroBtnCam');
+
+  const btnHoverShape = document.getElementById('btnHoverShape');
+  const btnHoverMirror = document.getElementById('btnHoverMirror');
+  const btnHoverBorder = document.getElementById('btnHoverBorder');
 
   const btnCleanMode = document.getElementById('btnCleanMode');
-  const btnHelpDiag = document.getElementById('btnHelpDiag');
-
-  const cardScreenAndCam = document.getElementById('cardScreenAndCam');
-  const cardCamOnly = document.getElementById('cardCamOnly');
-  const cardScreenOnly = document.getElementById('cardScreenOnly');
+  const btnHelp = document.getElementById('btnHelp');
+  const helpModal = document.getElementById('help-modal');
+  const btnCloseHelp = document.getElementById('btnCloseHelp');
 
   const countdownOverlay = document.getElementById('countdown-overlay');
-  const countdownNumber = document.getElementById('countdown-number');
-  const btnSkipCountdown = document.getElementById('btnSkipCountdown');
+  const countdownNum = document.getElementById('countdown-num');
 
   const previewModal = document.getElementById('preview-modal');
-  const modalVideoPlayer = document.getElementById('modal-video-player');
+  const modalVideo = document.getElementById('modal-video');
   const btnCloseModal = document.getElementById('btnCloseModal');
   const btnDownload = document.getElementById('btnDownload');
   const btnDiscard = document.getElementById('btnDiscard');
-  const recMetaInfo = document.getElementById('rec-meta-info');
-
-  const diagModal = document.getElementById('diag-modal');
-  const diagBody = document.getElementById('diag-body');
-  const btnCloseDiag = document.getElementById('btnCloseDiag');
-  const btnCloseDiagDone = document.getElementById('btnCloseDiagDone');
-  const btnDiagRescan = document.getElementById('btnDiagRescan');
+  const recInfoText = document.getElementById('rec-info-text');
 
   const toast = document.getElementById('toast');
   const canvas = document.getElementById('composite-canvas');
@@ -938,114 +828,50 @@
   const ab1 = document.getElementById('ab1');
   const ab2 = document.getElementById('ab2');
   const ab3 = document.getElementById('ab3');
-  const ab4 = document.getElementById('ab4');
 
   function showToast(msg) {
     toast.innerText = msg;
     toast.classList.add('show');
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => toast.classList.remove('show'), 3200);
+    toast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
 
   /* =========================================================
-     1. CAMERA CONTROLLER
+     1. 摄像头直接启动（和用户原版 PPT 相同机制，纯净直连）
      ========================================================= */
 
-  async function updateCameraList() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+  async function initCamera() {
+    placeholderTitle.innerText = '唤醒中...';
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      availableCameras = devices.filter(d => d.kind === 'videoinput');
-      if (availableCameras.length > 1) {
-        btnSwitchDevice.style.display = 'inline-flex';
-      } else {
-        btnSwitchDevice.style.display = 'none';
-      }
-      return availableCameras;
+      // 简单直连，不绕复杂循环，本地文件秒开
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        audio: false
+      });
     } catch (e) {
-      console.warn('Could not enumerate cameras:', e);
-      return [];
-    }
-  }
-
-  async function initCamera(preferredDeviceId = null) {
-    placeholderTitle.innerText = '正在唤醒摄像头...';
-    placeholderHint.innerText = '连接硬件中';
-
-    // Stop existing camera stream
-    if (camStream) {
-      camStream.getTracks().forEach(t => t.stop());
-      camStream = null;
-    }
-
-    const attempts = [];
-    if (preferredDeviceId) {
-      attempts.push({ video: { deviceId: { exact: preferredDeviceId } }, audio: false });
-    }
-    // Standard friendly resolution constraints
-    attempts.push({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
-    attempts.push({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-    attempts.push({ video: true, audio: false });
-
-    let stream = null;
-    let caughtErr = null;
-
-    for (const constraint of attempts) {
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraint);
-        if (stream) break;
+        // 极简保底
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       } catch (err) {
-        caughtErr = err;
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') break;
+        console.warn('Camera failed:', err);
+        placeholderTitle.innerText = '开启镜头';
+        if (err.name === 'NotFoundError') {
+          showToast('未检测到摄像头 (若Mac合盖请掀开屏幕)');
+        } else {
+          showToast('摄像头无法启动，请检查权限');
+        }
+        return;
       }
     }
 
-    if (stream) {
-      camStream = stream;
+    if (camStream) {
       camVideo.srcObject = camStream;
       camVideo.style.display = 'block';
       camPlaceholder.style.display = 'none';
       isCameraActive = true;
-      lastCameraError = null;
-
-      btnToggleCam.innerHTML = '📷 <span>镜头: 开</span>';
-      btnToggleCam.classList.add('active');
-      showToast('摄像头已就绪！');
-      await updateCameraList();
-    } else {
-      handleCameraError(caughtErr);
-    }
-  }
-
-  function handleCameraError(err) {
-    lastCameraError = err;
-    isCameraActive = false;
-    camStream = null;
-    camVideo.srcObject = null;
-    camVideo.style.display = 'none';
-    camPlaceholder.style.display = 'flex';
-
-    btnToggleCam.innerHTML = '📷 <span>镜头: 关</span>';
-    btnToggleCam.classList.remove('active');
-
-    if (err) {
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        placeholderTitle.innerText = '权限未开启';
-        placeholderHint.innerText = '请在浏览器地址栏 🔒 允许摄像头';
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        placeholderTitle.innerText = '设备被占用';
-        placeholderHint.innerText = '请彻底退出 QuickTime 等应用';
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        placeholderTitle.innerText = '未找到摄像头';
-        placeholderHint.innerText = 'MacBook 合盖中？掀开屏幕即可唤醒';
-      } else {
-        placeholderTitle.innerText = '摄像头未连接';
-        placeholderHint.innerText = '点击查看排查助手';
-      }
-      showToast('未开启摄像头：' + placeholderTitle.innerText);
-    } else {
-      placeholderTitle.innerText = '点击开启摄像头';
-      placeholderHint.innerText = '支持 Mac 自带 / iPhone 连续互通';
+      btnDockCam.classList.add('active');
+      camStatusText.innerText = '镜头 开';
+      showToast('摄像头已开启');
     }
   }
 
@@ -1058,38 +884,20 @@
       camVideo.srcObject = null;
       camVideo.style.display = 'none';
       camPlaceholder.style.display = 'flex';
-      placeholderTitle.innerText = '点击开启摄像头';
-      placeholderHint.innerText = '支持 Mac 自带 / iPhone 连续互通';
+      placeholderTitle.innerText = '开启镜头';
       isCameraActive = false;
-      btnToggleCam.innerHTML = '📷 <span>镜头: 关</span>';
-      btnToggleCam.classList.remove('active');
+      btnDockCam.classList.remove('active');
+      camStatusText.innerText = '镜头';
     } else {
       initCamera();
     }
   }
 
-  async function switchCamera() {
-    await updateCameraList();
-    if (availableCameras.length <= 1) {
-      showToast('当前仅检测到 1 个摄像头');
-      return;
-    }
-    currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-    const nextCam = availableCameras[currentCameraIndex];
-    showToast(`正在切换至: ${nextCam.label || '摄像头 ' + (currentCameraIndex + 1)}`);
-    initCamera(nextCam.deviceId);
-  }
-
-  btnToggleCam.addEventListener('click', toggleCamera);
   camPlaceholder.addEventListener('click', () => initCamera());
-  btnSwitchDevice.addEventListener('click', switchCamera);
-  btnSwitchCamQuick.addEventListener('click', (e) => {
-    e.stopPropagation();
-    switchCamera();
-  });
+  btnDockCam.addEventListener('click', toggleCamera);
 
   /* =========================================================
-     2. SCREEN CAPTURE CONTROLLER (Non-blocking)
+     2. 屏幕共享选择（防死循环闭环）
      ========================================================= */
 
   async function selectScreen() {
@@ -1105,72 +913,58 @@
       screenVideo.srcObject = screenStream;
       screenVideo.style.display = 'block';
       welcomeHero.style.display = 'none';
-      isCameraOnlyMode = false;
+      btnDockScreen.classList.add('active');
+      screenStatusText.innerText = '屏幕 已选';
 
-      // Handle user stopping stream from browser UI
       screenStream.getVideoTracks()[0].onended = () => {
         screenVideo.style.display = 'none';
         screenStream = null;
-        if (!isCameraActive) {
-          welcomeHero.style.display = 'flex';
-        }
+        btnDockScreen.classList.remove('active');
+        screenStatusText.innerText = '屏幕';
+        if (!isCameraActive) welcomeHero.style.display = 'flex';
         if (isRecording) stopRecording();
       };
-
-      showToast('屏幕共享已连接！');
+      showToast('屏幕已连接');
     } catch (e) {
-      if (e.name === 'NotAllowedError') {
-        showToast('取消了屏幕选择');
-      } else {
-        console.warn('Screen selection failed:', e);
+      if (e.name !== 'NotAllowedError') {
+        console.warn('Screen selection:', e);
       }
     } finally {
       isSelectingScreen = false;
     }
   }
 
-  btnSelectScreen.addEventListener('click', selectScreen);
-
-  // Hero Card Shortcuts
-  cardScreenAndCam.addEventListener('click', async () => {
+  btnDockScreen.addEventListener('click', selectScreen);
+  heroBtnScreen.addEventListener('click', async () => {
     if (!isCameraActive) initCamera();
     await selectScreen();
   });
 
-  cardCamOnly.addEventListener('click', () => {
+  heroBtnCam.addEventListener('click', () => {
     welcomeHero.style.display = 'none';
-    isCameraOnlyMode = true;
     if (!isCameraActive) initCamera();
-    showToast('已切换为纯镜头出镜模式');
-  });
-
-  cardScreenOnly.addEventListener('click', async () => {
-    if (isCameraActive) toggleCamera();
-    await selectScreen();
+    showToast('已进入纯出镜录制');
   });
 
   /* =========================================================
-     3. AUDIO MIXER & LIVE LEVEL METER
+     3. 麦克风收音与电平跳动
      ========================================================= */
 
-  async function setupAudioEngine() {
+  async function setupMic() {
     if (!audioContext) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       audioContext = new AudioCtx();
     }
-    if (audioContext.state === 'suspended') {
-      await audioContext.resume();
-    }
+    if (audioContext.state === 'suspended') await audioContext.resume();
 
-    if (isMicActive && (!micStream || !micStream.active)) {
+    if (!micStream || !micStream.active) {
       try {
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (err) {
-        console.warn('Microphone permission denied or missing:', err);
-        showToast('麦克风未开启，仅录制画面与系统声音');
+        console.warn('Mic declined:', err);
+        showToast('麦克风未授权');
         isMicActive = false;
-        btnToggleMic.innerHTML = '🎙️ <span>麦克风: 关</span>';
-        btnToggleMic.classList.remove('active');
+        btnDockMic.classList.remove('active');
         return;
       }
     }
@@ -1179,57 +973,48 @@
       try {
         const source = audioContext.createMediaStreamSource(micStream);
         analyserNode = audioContext.createAnalyser();
-        analyserNode.fftSize = 64;
+        analyserNode.fftSize = 32;
         source.connect(analyserNode);
-        startAudioMeterLoop();
-      } catch (e) {
-        console.warn('Analyser attach error:', e);
-      }
+        runAudioLoop();
+      } catch (e) {}
     }
   }
 
-  function startAudioMeterLoop() {
+  function runAudioLoop() {
     if (!analyserNode) return;
-    const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+    const data = new Uint8Array(analyserNode.frequencyBinCount);
 
-    function update() {
+    function frame() {
       if (!isMicActive || !micStream || !micStream.active) {
-        [ab1, ab2, ab3, ab4].forEach(b => {
-          b.style.height = '20%';
-          b.classList.remove('active');
-        });
+        [ab1, ab2, ab3].forEach(b => { b.style.height = '20%'; b.classList.remove('active'); });
         return;
       }
-
-      analyserNode.getByteFrequencyData(dataArray);
+      analyserNode.getByteFrequencyData(data);
       let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-      const avg = sum / dataArray.length; // 0 to 255
-      const level = Math.min(100, Math.max(15, (avg / 128) * 100));
+      for (let i = 0; i < data.length; i++) sum += data[i];
+      const avg = sum / data.length;
+      const pct = Math.min(100, Math.max(15, (avg / 120) * 100));
 
-      ab1.style.height = `${Math.min(100, level * 0.6)}%`;
-      ab2.style.height = `${Math.min(100, level * 0.9)}%`;
-      ab3.style.height = `${Math.min(100, level * 1.1)}%`;
-      ab4.style.height = `${Math.min(100, level * 0.8)}%`;
+      ab1.style.height = `${pct * 0.6}%`;
+      ab2.style.height = `${pct * 1.0}%`;
+      ab3.style.height = `${pct * 0.7}%`;
 
-      const isActive = avg > 8;
-      [ab1, ab2, ab3, ab4].forEach(b => b.classList.toggle('active', isActive));
+      const active = avg > 8;
+      [ab1, ab2, ab3].forEach(b => b.classList.toggle('active', active));
 
-      requestAnimationFrame(update);
+      requestAnimationFrame(frame);
     }
-    update();
+    frame();
   }
 
-  btnToggleMic.addEventListener('click', async () => {
+  btnDockMic.addEventListener('click', async () => {
     isMicActive = !isMicActive;
     if (isMicActive) {
-      btnToggleMic.innerHTML = '🎙️ <span>麦克风: 开</span>';
-      btnToggleMic.classList.add('active');
-      await setupAudioEngine();
+      btnDockMic.classList.add('active');
+      await setupMic();
       showToast('麦克风收音已开启');
     } else {
-      btnToggleMic.innerHTML = '🎙️ <span>麦克风: 关</span>';
-      btnToggleMic.classList.remove('active');
+      btnDockMic.classList.remove('active');
       if (micStream) {
         micStream.getTracks().forEach(t => t.stop());
         micStream = null;
@@ -1238,94 +1023,83 @@
     }
   });
 
-  // Pre-probe mic gently on first click
   document.addEventListener('click', () => {
-    if (!audioContext && isMicActive) setupAudioEngine();
+    if (!audioContext && isMicActive) setupMic();
   }, { once: true });
 
   /* =========================================================
-     4. SHAPES, SIZING & DRAG CONTROLS
+     4. 形状、发光、缩放与拖拽
      ========================================================= */
 
   function applyShape(idx) {
     currentShapeIdx = idx % shapes.length;
     shapes.forEach(s => camWrapper.classList.remove(s));
     camWrapper.classList.add(shapes[currentShapeIdx]);
-    btnShapeSelector.innerText = `🔮 形状: ${shapeNames[currentShapeIdx]}`;
   }
 
-  btnCycleShape.addEventListener('click', (e) => {
-    e.stopPropagation();
-    applyShape(currentShapeIdx + 1);
-  });
-  btnShapeSelector.addEventListener('click', () => applyShape(currentShapeIdx + 1));
+  btnHoverShape.addEventListener('click', (e) => { e.stopPropagation(); applyShape(currentShapeIdx + 1); });
+  btnDockShape.addEventListener('click', () => applyShape(currentShapeIdx + 1));
 
-  btnCycleBorder.addEventListener('click', (e) => {
+  btnHoverBorder.addEventListener('click', (e) => {
     e.stopPropagation();
     currentBorderIdx = (currentBorderIdx + 1) % borders.length;
     borders.forEach(b => camBubble.classList.remove(b));
     camBubble.classList.add(borders[currentBorderIdx]);
   });
 
-  btnToggleMirror.addEventListener('click', (e) => {
+  btnHoverMirror.addEventListener('click', (e) => {
     e.stopPropagation();
     isMirrored = !isMirrored;
     camVideo.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-    showToast(isMirrored ? '已开启镜像' : '已关闭镜像');
   });
 
-  btnCamSize.addEventListener('click', () => {
+  btnDockSize.addEventListener('click', () => {
     currentSizeIdx = (currentSizeIdx + 1) % sizes.length;
-    const newSize = sizes[currentSizeIdx];
-    camBubble.style.width = `${newSize}px`;
-    camBubble.style.height = `${newSize}px`;
-    btnCamSize.innerText = `📐 大小: ${newSize}px`;
+    const s = sizes[currentSizeIdx];
+    camBubble.style.width = `${s}px`;
+    camBubble.style.height = `${s}px`;
+    showToast(`尺寸: ${s}px`);
   });
 
-  // Fluid Mouse Wheel Resize
+  // 滚轮无级缩放气泡
   camBubble.addEventListener('wheel', (e) => {
     e.preventDefault();
-    let currentWidth = camBubble.offsetWidth;
-    currentWidth = e.deltaY < 0 ? Math.min(currentWidth + 16, 360) : Math.max(currentWidth - 16, 100);
-    camBubble.style.width = `${currentWidth}px`;
-    camBubble.style.height = `${currentWidth}px`;
-    btnCamSize.innerText = `📐 大小: ${currentWidth}px`;
+    let w = camBubble.offsetWidth;
+    w = e.deltaY < 0 ? Math.min(w + 14, 360) : Math.max(w - 14, 90);
+    camBubble.style.width = `${w}px`;
+    camBubble.style.height = `${w}px`;
   });
 
-  // Draggable Bubble with boundary limits
+  // 自由拖拽定位
   let isDragging = false;
-  let dragStartX, dragStartY, initialLeft, initialTop;
+  let dragX, dragY, initL, initT;
 
   camBubble.addEventListener('pointerdown', (e) => {
-    if (e.target.tagName === 'BUTTON') return;
+    if (e.target.closest('button')) return;
     isDragging = true;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    const rect = camBubble.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    initialLeft = rect.left - stageRect.left;
-    initialTop = rect.top - stageRect.top;
-
+    dragX = e.clientX;
+    dragY = e.clientY;
+    const r = camBubble.getBoundingClientRect();
+    const sr = stage.getBoundingClientRect();
+    initL = r.left - sr.left;
+    initT = r.top - sr.top;
     camBubble.style.bottom = 'auto';
     camBubble.style.right = 'auto';
-    camBubble.style.left = `${initialLeft}px`;
-    camBubble.style.top = `${initialTop}px`;
+    camBubble.style.left = `${initL}px`;
+    camBubble.style.top = `${initT}px`;
     camBubble.setPointerCapture(e.pointerId);
   });
 
   camBubble.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - dragStartX;
-    const dy = e.clientY - dragStartY;
-    const stageRect = stage.getBoundingClientRect();
-    const bubbleW = camBubble.offsetWidth;
-    const bubbleH = camBubble.offsetHeight;
+    const dx = e.clientX - dragX;
+    const dy = e.clientY - dragY;
+    const sr = stage.getBoundingClientRect();
+    const bw = camBubble.offsetWidth;
+    const bh = camBubble.offsetHeight;
 
-    let newLeft = Math.max(10, Math.min(initialLeft + dx, stageRect.width - bubbleW - 10));
-    let newTop = Math.max(10, Math.min(initialTop + dy, stageRect.height - bubbleH - 10));
-
-    camBubble.style.left = `${newLeft}px`;
-    camBubble.style.top = `${newTop}px`;
+    camBubble.style.left = `${Math.max(10, Math.min(initL + dx, sr.width - bw - 10))}px`;
+    camBubble.style.top = `${Math.max(10, Math.min(initT + dy, sr.height - bh - 10))}px`;
   });
 
   camBubble.addEventListener('pointerup', (e) => {
@@ -1334,174 +1108,148 @@
   });
 
   /* =========================================================
-     5. CLEAN MODE (H KEY)
+     5. 沉浸模式 (H 键)
      ========================================================= */
 
-  function toggleCleanMode() {
+  function toggleClean() {
     isCleanMode = !isCleanMode;
     dock.classList.toggle('hidden-ui', isCleanMode);
     mainHeader.style.display = isCleanMode ? 'none' : 'flex';
-    showToast(isCleanMode ? '沉浸模式已开启 (按 H 键恢复控制栏)' : '控制栏已恢复');
+    showToast(isCleanMode ? '沉浸模式 (按 H 恢复)' : '已恢复工具栏');
   }
 
-  btnCleanMode.addEventListener('click', toggleCleanMode);
+  btnCleanMode.addEventListener('click', toggleClean);
 
   /* =========================================================
-     6. 60 FPS CANVAS COMPOSITING & RECORDING ENGINE
+     6. 60 FPS 录制与 Canvas 实时合成
      ========================================================= */
 
-  function drawCompositeFrame() {
+  function drawComposite() {
     if (!isRecording) return;
 
-    // A. Draw Screen background (or elegant dark studio background)
     if (screenVideo.style.display !== 'none' && screenVideo.videoWidth) {
       ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
     } else {
-      ctx.fillStyle = "#070a12";
+      ctx.fillStyle = "#181b24";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // B. Draw Floating Facecam Bubble if active
     if (isCameraActive && camVideo.videoWidth) {
-      const stageRect = stage.getBoundingClientRect();
-      const bubbleRect = camBubble.getBoundingClientRect();
+      const sr = stage.getBoundingClientRect();
+      const br = camBubble.getBoundingClientRect();
+      const sx = canvas.width / sr.width;
+      const sy = canvas.height / sr.height;
 
-      const scaleX = canvas.width / stageRect.width;
-      const scaleY = canvas.height / stageRect.height;
-
-      const camX = (bubbleRect.left - stageRect.left) * scaleX;
-      const camY = (bubbleRect.top - stageRect.top) * scaleY;
-      const camW = bubbleRect.width * scaleX;
-      const camH = bubbleRect.height * scaleY;
+      const cx = (br.left - sr.left) * sx;
+      const cy = (br.top - sr.top) * sy;
+      const cw = br.width * sx;
+      const ch = br.height * sy;
 
       ctx.save();
       ctx.beginPath();
 
-      // Shape clipping
-      const currentShape = shapes[currentShapeIdx];
-      if (currentShape === 'shape-circle') {
-        ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
-      } else if (currentShape === 'shape-squircle' || currentShape === 'shape-rounded') {
-        const radius = currentShape === 'shape-squircle' ? camW * 0.28 : camW * 0.12;
-        ctx.roundRect(camX, camY, camW, camH, radius);
-      } else if (currentShape === 'shape-hexagon') {
-        ctx.moveTo(camX + camW * 0.25, camY);
-        ctx.lineTo(camX + camW * 0.75, camY);
-        ctx.lineTo(camX + camW, camY + camH * 0.5);
-        ctx.lineTo(camX + camW * 0.75, camY + camH);
-        ctx.lineTo(camX + camW * 0.25, camY + camH);
-        ctx.lineTo(camX, camY + camH * 0.5);
+      const sh = shapes[currentShapeIdx];
+      if (sh === 'shape-circle') {
+        ctx.arc(cx + cw / 2, cy + ch / 2, cw / 2, 0, Math.PI * 2);
+      } else if (sh === 'shape-squircle' || sh === 'shape-rounded') {
+        const rad = sh === 'shape-squircle' ? cw * 0.28 : cw * 0.12;
+        ctx.roundRect(cx, cy, cw, ch, rad);
+      } else if (sh === 'shape-hexagon') {
+        ctx.moveTo(cx + cw * 0.25, cy);
+        ctx.lineTo(cx + cw * 0.75, cy);
+        ctx.lineTo(cx + cw, cy + ch * 0.5);
+        ctx.lineTo(cx + cw * 0.75, cy + ch);
+        ctx.lineTo(cx + cw * 0.25, cy + ch);
+        ctx.lineTo(cx, cy + ch * 0.5);
         ctx.closePath();
       } else {
-        ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
+        ctx.arc(cx + cw / 2, cy + ch / 2, cw / 2, 0, Math.PI * 2);
       }
       ctx.clip();
 
-      // Draw camera frame with mirror transform if enabled
       if (isMirrored) {
-        ctx.translate(camX + camW, camY);
+        ctx.translate(cx + cw, cy);
         ctx.scale(-1, 1);
-        ctx.drawImage(camVideo, 0, 0, camW, camH);
+        ctx.drawImage(camVideo, 0, 0, cw, ch);
       } else {
-        ctx.drawImage(camVideo, camX, camY, camW, camH);
+        ctx.drawImage(camVideo, cx, cy, cw, ch);
       }
       ctx.restore();
 
-      // Draw subtle glow ring on canvas
+      // 发光环绘制
       if (borders[currentBorderIdx] !== 'border-glow-none') {
         ctx.save();
-        ctx.lineWidth = 4 * scaleX;
-        ctx.strokeStyle = borders[currentBorderIdx].includes('purple') ? '#a855f7' : (borders[currentBorderIdx].includes('green') ? '#10b981' : '#38bdf8');
+        ctx.lineWidth = 4 * sx;
+        ctx.strokeStyle = borders[currentBorderIdx].includes('purple') ? '#a78bfa' : (borders[currentBorderIdx].includes('green') ? '#34d399' : '#38bdf8');
         ctx.beginPath();
-        if (currentShape === 'shape-circle') {
-          ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
-        } else if (currentShape === 'shape-squircle' || currentShape === 'shape-rounded') {
-          const radius = currentShape === 'shape-squircle' ? camW * 0.28 : camW * 0.12;
-          ctx.roundRect(camX, camY, camW, camH, radius);
+        if (sh === 'shape-circle') {
+          ctx.arc(cx + cw / 2, cy + ch / 2, cw / 2, 0, Math.PI * 2);
+        } else {
+          ctx.roundRect(cx, cy, cw, ch, cw * 0.28);
         }
         ctx.stroke();
         ctx.restore();
       }
     }
 
-    requestAnimationFrame(drawCompositeFrame);
+    requestAnimationFrame(drawComposite);
   }
 
-  function startCountdownThenRecord() {
-    let count = 3;
-    countdownNumber.innerText = count;
+  function startCountdown() {
+    let c = 3;
+    countdownNum.innerText = c;
     countdownOverlay.style.display = 'flex';
 
-    function completeCountdown() {
-      clearInterval(countdownTimerInterval);
-      countdownOverlay.style.display = 'none';
-      executeRecordStart();
-    }
-
-    btnSkipCountdown.onclick = completeCountdown;
-
-    countdownTimerInterval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        countdownNumber.innerText = count;
-        countdownNumber.style.animation = 'none';
-        void countdownNumber.offsetWidth; // trigger reflow
-        countdownNumber.style.animation = 'count-pop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    const interval = setInterval(() => {
+      c--;
+      if (c > 0) {
+        countdownNum.innerText = c;
       } else {
-        completeCountdown();
+        clearInterval(interval);
+        countdownOverlay.style.display = 'none';
+        beginRecording();
       }
-    }, 900);
+    }, 850);
   }
 
-  async function executeRecordStart() {
+  async function beginRecording() {
     recordedChunks = [];
     canvas.width = 1920;
     canvas.height = 1080;
 
-    // Set up Web Audio destination
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!audioContext) audioContext = new AudioCtx();
     if (audioContext.state === 'suspended') await audioContext.resume();
 
-    const audioDestination = audioContext.createMediaStreamDestination();
+    const dest = audioContext.createMediaStreamDestination();
 
-    // 1. Connect Screen Audio (System/Tab audio)
     if (screenStream && screenStream.getAudioTracks().length > 0) {
       try {
-        const screenAudio = audioContext.createMediaStreamSource(screenStream);
-        screenAudio.connect(audioDestination);
-      } catch (e) {
-        console.warn('Could not pipe screen audio:', e);
+        audioContext.createMediaStreamSource(screenStream).connect(dest);
+      } catch (e) {}
+    }
+
+    if (isMicActive) {
+      if (!micStream || !micStream.active) await setupMic();
+      if (micStream && micStream.getAudioTracks().length > 0) {
+        try {
+          audioContext.createMediaStreamSource(micStream).connect(dest);
+        } catch (e) {}
       }
     }
 
-    // 2. Connect Mic Audio
-    if (isMicActive && (!micStream || !micStream.active)) {
-      await setupAudioEngine();
-    }
-    if (isMicActive && micStream && micStream.getAudioTracks().length > 0) {
-      try {
-        const micAudio = audioContext.createMediaStreamSource(micStream);
-        micAudio.connect(audioDestination);
-      } catch (e) {
-        console.warn('Could not pipe mic audio:', e);
-      }
-    }
+    const stream = canvas.captureStream(60);
+    dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
 
-    // 3. Composite 60 FPS Video Stream + Audio Stream
-    const canvasStream = canvas.captureStream(60);
-    audioDestination.stream.getAudioTracks().forEach(t => canvasStream.addTrack(t));
-
-    // Codec determination
     let mimeType = 'video/webm;codecs=vp9,opus';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
       mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
     }
 
     try {
-      mediaRecorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 8000000 });
+      mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
     } catch (e) {
-      mediaRecorder = new MediaRecorder(canvasStream);
+      mediaRecorder = new MediaRecorder(stream);
     }
 
     mediaRecorder.ondataavailable = (e) => {
@@ -1510,37 +1258,35 @@
 
     mediaRecorder.onstop = () => {
       recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-      const videoURL = URL.createObjectURL(recordedBlob);
-      modalVideoPlayer.src = videoURL;
-      
-      const sizeMB = (recordedBlob.size / (1024 * 1024)).toFixed(2);
-      recMetaInfo.innerText = `大小: ${sizeMB} MB · 时长: ${timerDisplay.innerText} · 格式: ${mediaRecorder.mimeType} (60 FPS)`;
-
+      modalVideo.src = URL.createObjectURL(recordedBlob);
+      const mb = (recordedBlob.size / (1024 * 1024)).toFixed(1);
+      recInfoText.innerText = `大小: ${mb} MB · 时长: ${timerDisplay.innerText}`;
       previewModal.style.display = 'flex';
-      btnRecord.innerHTML = '🔴 <span>开始录制</span>';
+
       btnRecord.classList.remove('recording');
+      recordBtnText.innerText = '录制';
       recDot.classList.remove('active');
-      clearInterval(recordTimerInterval);
+      clearInterval(timerInterval);
     };
 
     mediaRecorder.start(200);
     isRecording = true;
-    drawCompositeFrame();
+    drawComposite();
 
-    btnRecord.innerHTML = '⏹ <span>停止录制</span>';
     btnRecord.classList.add('recording');
+    recordBtnText.innerText = '停止';
     recDot.classList.add('active');
     recordSeconds = 0;
     timerDisplay.innerText = '00:00';
 
-    recordTimerInterval = setInterval(() => {
+    timerInterval = setInterval(() => {
       recordSeconds++;
-      const mins = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
-      const secs = (recordSeconds % 60).toString().padStart(2, '0');
-      timerDisplay.innerText = `${mins}:${secs}`;
+      const m = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
+      const s = (recordSeconds % 60).toString().padStart(2, '0');
+      timerDisplay.innerText = `${m}:${s}`;
     }, 1000);
 
-    showToast('🔴 录制已启动！按 H 可隐藏控制栏');
+    showToast('🔴 录制已开始 (按 H 隐藏工具栏)');
   }
 
   function stopRecording() {
@@ -1550,169 +1296,57 @@
     }
   }
 
-  btnRecord.addEventListener('click', async () => {
+  btnRecord.addEventListener('click', () => {
     if (isRecording) {
       stopRecording();
-      return;
+    } else {
+      if (!screenStream && !isCameraActive) {
+        welcomeHero.style.display = 'none';
+        initCamera();
+      }
+      startCountdown();
     }
-
-    // If neither screen nor camera selected, prompt user cleanly
-    if (!screenStream && !isCameraActive && !isCameraOnlyMode) {
-      showToast('请先选择录制模式（屏幕共享或出镜拍摄）');
-      welcomeHero.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-
-    startCountdownThenRecord();
   });
 
   /* =========================================================
-     7. EXPORT & DOWNLOAD
+     7. 下载与重录
      ========================================================= */
 
   btnDownload.addEventListener('click', () => {
     if (!recordedBlob) return;
     const a = document.createElement('a');
-    a.href = modalVideoPlayer.src;
+    a.href = modalVideo.src;
     const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
     a.download = `PipCast_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${ext}`;
     a.click();
-    showToast('视频已保存至本地！');
+    showToast('视频已保存');
   });
 
   btnCloseModal.addEventListener('click', () => {
     previewModal.style.display = 'none';
-    modalVideoPlayer.pause();
+    modalVideo.pause();
   });
 
   btnDiscard.addEventListener('click', () => {
-    if (confirm('确认放弃本段录屏并重新录制？')) {
+    if (confirm('确认放弃本段录制？')) {
       previewModal.style.display = 'none';
-      modalVideoPlayer.pause();
+      modalVideo.pause();
       recordedBlob = null;
-      showToast('已放弃上一段录制');
     }
   });
 
-  /* =========================================================
-     8. DIAGNOSTICS & TROUBLESHOOTING MODAL
-     ========================================================= */
+  /* 帮助弹窗 */
+  btnHelp.addEventListener('click', () => helpModal.style.display = 'flex');
+  btnCloseHelp.addEventListener('click', () => helpModal.style.display = 'none');
 
-  async function showDiagnostics() {
-    await updateCameraList();
-    const isFile = window.location.protocol === 'file:';
-    const isSecure = window.isSecureContext;
-    const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-
-    let html = '';
-
-    // Hardware Alert Banner
-    if (lastCameraError) {
-      if (lastCameraError.name === 'NotReadableError' || lastCameraError.name === 'TrackStartError') {
-        html += `
-          <div class="diag-card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08);">
-            <div style="font-weight: 700; color: #f87171; margin-bottom: 6px;">⚠️ 摄像头被其他软件独占 (NotReadableError)</div>
-            <div style="font-size: 13px; line-height: 1.6; color: #cbd5e1;">
-              macOS 系统规定摄像头同一时刻只能被一个应用调用。<br>
-              <strong>最常见排查：</strong>后台打开了 <strong>QuickTime Player</strong>（或其他会议软件）并占用了摄像头。<br>
-              👉 <strong>解决方式：</strong>在屏幕 Dock 中按 <span class="code-inline">Cmd + Q</span> 彻底退出 QuickTime，然后点击下方【重新扫描硬件】！
-            </div>
-          </div>
-        `;
-      } else if (lastCameraError.name === 'NotFoundError' || lastCameraError.name === 'DevicesNotFoundError') {
-        html += `
-          <div class="diag-card" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
-            <div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px;">💻 硬件诊断：MacBook 处于【合盖模式】或摄像头休眠</div>
-            <div style="font-size: 13px; line-height: 1.6; color: #cbd5e1;">
-              合盖外接显示器时，macOS 会对自带 FaceTime 高清摄像头<strong>物理断电休眠</strong>以保障隐私！<br>
-              👉 <strong>解决方案：</strong><br>
-              1. <strong>掀开 MacBook 屏幕盖子</strong>（哪怕只掀开 2 厘米），自带镜头立即通电恢复！<br>
-              2. <strong>使用 iPhone 连续互通相机</strong>：iPhone 必须保持<strong>【黑屏锁屏 + 横向固定】</strong>，即可作为无线高清镜头。
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    // System Environment Checks
-    html += `
-      <div class="diag-card">
-        <div style="font-weight: 700; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">系统与安全上下文</div>
-        <div class="diag-item">
-          <span class="diag-badge ${hasMediaDevices ? 'badge-ok' : 'badge-err'}">${hasMediaDevices ? '支持' : '不支持'}</span>
-          <div>WebRTC MediaDevices API 接口</div>
-        </div>
-        <div class="diag-item">
-          <span class="diag-badge ${isSecure ? 'badge-ok' : 'badge-err'}">${isSecure ? '安全环境 (Secure)' : '非安全环境'}</span>
-          <div>访问协议: <code>${window.location.protocol}</code> (${isFile ? '本地文件模式' : '本地服务模式'})</div>
-        </div>
-      </div>
-    `;
-
-    // Detected Cameras List
-    html += `
-      <div class="diag-card">
-        <div style="font-weight: 700; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">
-          检测到的视频输入设备 (${availableCameras.length} 个)
-        </div>
-    `;
-
-    if (availableCameras.length === 0) {
-      html += `<div style="font-size: 13px; color: var(--text-muted);">暂未列出具体设备。点击下方【重新扫描】进行授权探测。</div>`;
-    } else {
-      availableCameras.forEach((cam, i) => {
-        const isCurrent = i === currentCameraIndex && isCameraActive;
-        html += `
-          <div class="diag-item" style="justify-content: space-between;">
-            <div>${i + 1}. <strong>${cam.label || 'Camera ' + (i + 1)}</strong></div>
-            <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" onclick="window.pickCamera('${cam.deviceId}', ${i})">
-              ${isCurrent ? '✅ 当前使用中' : '切换至此设备'}
-            </button>
-          </div>
-        `;
-      });
-    }
-    html += `</div>`;
-
-    diagBody.innerHTML = html;
-    diagModal.style.display = 'flex';
-  }
-
-  window.pickCamera = function(deviceId, index) {
-    currentCameraIndex = index;
-    diagModal.style.display = 'none';
-    initCamera(deviceId);
-  };
-
-  btnHelpDiag.addEventListener('click', showDiagnostics);
-  btnCloseDiag.addEventListener('click', () => diagModal.style.display = 'none');
-  btnCloseDiagDone.addEventListener('click', () => diagModal.style.display = 'none');
-  btnDiagRescan.addEventListener('click', async () => {
-    await updateCameraList();
-    showDiagnostics();
-    showToast('硬件设备列表已刷新');
-  });
-
-  /* =========================================================
-     9. KEYBOARD SHORTCUTS
-     ========================================================= */
-
+  /* 键盘快捷键 */
   window.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-    if (e.code === 'KeyH') {
-      toggleCleanMode();
-    } else if (e.code === 'KeyC') {
-      toggleCamera();
-    } else if (e.code === 'KeyS') {
-      applyShape(currentShapeIdx + 1);
-    } else if (e.code === 'KeyM') {
-      btnToggleMic.click();
-    }
+    if (e.target.tagName === 'INPUT') return;
+    if (e.code === 'KeyH') toggleClean();
+    else if (e.code === 'KeyC') toggleCamera();
+    else if (e.code === 'KeyS') applyShape(currentShapeIdx + 1);
+    else if (e.code === 'KeyM') btnDockMic.click();
   });
-
-  // Soft startup: check camera availability without loud error popups
-  updateCameraList();
 </script>
 </body>
 </html>
