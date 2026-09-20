@@ -414,6 +414,21 @@
     #dock.snap-right.hidden-ui {
       transform: translateX(40px) !important;
     }
+    #dock.snap-top.hidden-ui {
+      transform: translateY(-40px) !important;
+    }
+    #dock.snap-bottom.hidden-ui {
+      transform: translateY(40px) !important;
+    }
+
+    /* 靠上或靠下吸附时：变换为高贵横向胶囊 Dock */
+    #dock.snap-top,
+    #dock.snap-bottom {
+      flex-direction: row;
+      padding: 7px 14px;
+      border-radius: 999px;
+      gap: 7px;
+    }
 
     /* 拖拽吸附抓手手柄 */
     .dock-drag-handle {
@@ -435,10 +450,29 @@
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    #dock.snap-top .dock-drag-handle,
+    #dock.snap-bottom .dock-drag-handle {
+      width: 14px;
+      height: 36px;
+      padding: 0 4px 0 2px;
+    }
+
+    #dock.snap-top .dock-drag-bar,
+    #dock.snap-bottom .dock-drag-bar {
+      width: 3.5px;
+      height: 20px;
+    }
+
     .dock-drag-handle:hover .dock-drag-bar,
     #dock:hover .dock-drag-bar {
       background: rgba(255, 255, 255, 0.55);
       width: 26px;
+    }
+
+    #dock.snap-top:hover .dock-drag-bar,
+    #dock.snap-bottom:hover .dock-drag-bar {
+      width: 3.5px;
+      height: 24px;
     }
 
     .dock-drag-handle:hover .dock-drag-bar {
@@ -461,27 +495,60 @@
       display: none !important;
     }
 
-    /* 侧边磁吸导引发光指示条 */
+    /* 侧边磁吸导引发光指示条 (支持上、下、左、右 4 方向) */
     .dock-snap-guide {
       position: fixed;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: linear-gradient(180deg, transparent, var(--accent), transparent);
-      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
-      opacity: 0;
       pointer-events: none;
       z-index: 340;
+      opacity: 0;
       transition: opacity 0.2s ease;
     }
 
     .dock-snap-guide.guide-left {
+      top: 0;
+      bottom: 0;
       left: 0;
+      right: auto;
+      height: auto;
+      width: 4px;
+      background: linear-gradient(180deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
       opacity: 0.85;
     }
 
     .dock-snap-guide.guide-right {
+      top: 0;
+      bottom: 0;
       right: 0;
+      left: auto;
+      height: auto;
+      width: 4px;
+      background: linear-gradient(180deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
+      opacity: 0.85;
+    }
+
+    .dock-snap-guide.guide-top {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
+      opacity: 0.85;
+    }
+
+    .dock-snap-guide.guide-bottom {
+      bottom: 0;
+      top: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
       opacity: 0.85;
     }
 
@@ -490,6 +557,18 @@
       height: 1px;
       background: rgba(255, 255, 255, 0.12);
       margin: 2px 0;
+    }
+
+    #dock.snap-top .dock-divider,
+    #dock.snap-bottom .dock-divider {
+      width: 1px;
+      height: 24px;
+      margin: 0 4px;
+    }
+
+    #dock.snap-top .timer-badge,
+    #dock.snap-bottom .timer-badge {
+      padding: 2px 6px;
     }
 
     /* 精致轻量图标按钮 */
@@ -611,6 +690,62 @@
     #dock.snap-right .btn-record-pill:hover .dock-tooltip {
       opacity: 1;
       transform: translateY(-50%) translateX(0);
+    }
+
+    /* 靠上吸附时：Tooltip 向下展开 */
+    #dock.snap-top .dock-tooltip {
+      top: calc(100% + 10px);
+      bottom: auto;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%) translateY(-6px);
+    }
+
+    #dock.snap-top .dock-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      top: auto;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: transparent transparent rgba(20, 24, 33, 0.96) transparent;
+    }
+
+    #dock.snap-top .icon-btn:hover .dock-tooltip,
+    #dock.snap-top .btn-record-pill:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 靠下吸附时：Tooltip 向上展开 */
+    #dock.snap-bottom .dock-tooltip {
+      bottom: calc(100% + 10px);
+      top: auto;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%) translateY(6px);
+    }
+
+    #dock.snap-bottom .dock-tooltip::before {
+      content: '';
+      position: absolute;
+      top: 100%;
+      bottom: auto;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: rgba(20, 24, 33, 0.96) transparent transparent transparent;
+    }
+
+    #dock.snap-bottom .icon-btn:hover .dock-tooltip,
+    #dock.snap-bottom .btn-record-pill:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* 麦克风跳动电平 */
@@ -1918,13 +2053,21 @@
     isCleanMode = !isCleanMode;
     dock.classList.toggle('hidden-ui', isCleanMode);
     mainHeader.style.display = isCleanMode ? 'none' : 'flex';
+    if (dockCurrentSide === 'top' && !isCleanMode) {
+      let ratio = 0.5;
+      try {
+        const saved = localStorage.getItem('pipcast_dock_pref');
+        if (saved) ratio = JSON.parse(saved).ratio || 0.5;
+      } catch (_) {}
+      applyDockSnap('top', ratio, false);
+    }
     showToast(isCleanMode ? '沉浸模式 (按 H 恢复)' : '已恢复工具栏');
   }
 
   btnCleanMode.addEventListener('click', toggleClean);
 
   /* =========================================================
-     5.1 控制 Dock 拖拽与智能侧边磁吸系统 (Magnetic Dock Snapping)
+     5.1 控制 Dock 拖拽与智能 4 边缘磁吸系统 (4-Way Magnetic Dock Snapping)
      ========================================================= */
   let isDockDragging = false;
   let dockDragStartX = 0;
@@ -1932,27 +2075,48 @@
   let dockInitLeft = 0;
   let dockInitTop = 0;
   let dockMoved = false;
-  let dockCurrentSide = 'left'; // 'left' 或 'right'
+  let dockCurrentSide = 'left'; // 'left' | 'right' | 'top' | 'bottom'
   const DOCK_EDGE_MARGIN = 18;
   const DOCK_SNAP_THRESHOLD = 130; // 靠近屏幕边缘触发磁吸预判
 
-  function applyDockSnap(side, topRatio = 0.5, animate = true) {
+  function applyDockSnap(side, ratio = 0.5, animate = true) {
     dockCurrentSide = side;
-    const dockW = dock.offsetWidth || 56;
-    const dockH = dock.offsetHeight || 390;
+
+    // 1. 设置布局 class（横向/竖向及方位）
+    dock.classList.remove('snap-left', 'snap-right', 'snap-top', 'snap-bottom');
+    dock.classList.add(`snap-${side}`);
+
+    // 2. 测量当前布局下的真实宽高（读取 offsetWidth 触发实时 reflow 计算）
+    const isHorizontal = (side === 'top' || side === 'bottom');
     const winW = window.innerWidth;
     const winH = window.innerHeight;
+    const headerH = (mainHeader && mainHeader.style.display !== 'none') ? mainHeader.offsetHeight : 0;
 
-    let targetLeft = (side === 'right') ? (winW - dockW - DOCK_EDGE_MARGIN) : DOCK_EDGE_MARGIN;
-    let targetTop = (winH * topRatio) - (dockH / 2);
-    // 顶部与底部留出安全内边距，避开系统栏与顶栏
-    targetTop = Math.max(16, Math.min(targetTop, winH - dockH - 16));
+    const dockW = dock.offsetWidth || (isHorizontal ? 480 : 56);
+    const dockH = dock.offsetHeight || (isHorizontal ? 56 : 390);
 
-    dock.classList.toggle('snap-left', side === 'left');
-    dock.classList.toggle('snap-right', side === 'right');
+    let targetLeft, targetTop;
+
+    if (side === 'left') {
+      targetLeft = DOCK_EDGE_MARGIN;
+      targetTop = (winH * ratio) - (dockH / 2);
+      targetTop = Math.max(16, Math.min(targetTop, winH - dockH - 16));
+    } else if (side === 'right') {
+      targetLeft = winW - dockW - DOCK_EDGE_MARGIN;
+      targetTop = (winH * ratio) - (dockH / 2);
+      targetTop = Math.max(16, Math.min(targetTop, winH - dockH - 16));
+    } else if (side === 'top') {
+      targetTop = isCleanMode ? DOCK_EDGE_MARGIN : Math.max(DOCK_EDGE_MARGIN, headerH + 10);
+      targetLeft = (winW * ratio) - (dockW / 2);
+      targetLeft = Math.max(16, Math.min(targetLeft, winW - dockW - 16));
+    } else if (side === 'bottom') {
+      targetTop = winH - dockH - DOCK_EDGE_MARGIN;
+      targetLeft = (winW * ratio) - (dockW / 2);
+      targetLeft = Math.max(16, Math.min(targetLeft, winW - dockW - 16));
+    }
 
     if (animate) {
-      dock.style.transition = 'left 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.15), top 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, box-shadow 0.2s ease';
+      dock.style.transition = 'left 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.15), top 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, box-shadow 0.2s ease, border-radius 0.25s ease';
     } else {
       dock.style.transition = 'none';
     }
@@ -1961,29 +2125,30 @@
     dock.style.left = `${Math.round(targetLeft)}px`;
     dock.style.top = `${Math.round(targetTop)}px`;
 
-    // 本地持久化记住用户偏好的停靠边缘与位置
+    // 本地持久化记住用户偏好
     try {
-      const finalRatio = (targetTop + dockH / 2) / winH;
-      localStorage.setItem('pipcast_dock_pref', JSON.stringify({ side, topRatio: finalRatio }));
+      localStorage.setItem('pipcast_dock_pref', JSON.stringify({ side, ratio }));
     } catch (_) {}
   }
 
   function initDockPosition() {
     let side = 'left';
-    let topRatio = 0.5;
+    let ratio = 0.5;
     try {
       const saved = localStorage.getItem('pipcast_dock_pref');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.side === 'left' || parsed.side === 'right') side = parsed.side;
-        if (typeof parsed.topRatio === 'number' && !isNaN(parsed.topRatio)) {
-          topRatio = Math.max(0.1, Math.min(0.9, parsed.topRatio));
+        if (['left', 'right', 'top', 'bottom'].includes(parsed.side)) side = parsed.side;
+        if (typeof parsed.ratio === 'number' && !isNaN(parsed.ratio)) {
+          ratio = Math.max(0.05, Math.min(0.95, parsed.ratio));
+        } else if (typeof parsed.topRatio === 'number' && !isNaN(parsed.topRatio)) {
+          ratio = Math.max(0.05, Math.min(0.95, parsed.topRatio));
         }
       }
     } catch (_) {}
 
     dockCurrentSide = side;
-    applyDockSnap(side, topRatio, false);
+    applyDockSnap(side, ratio, false);
   }
 
   dock.addEventListener('pointerdown', (e) => {
@@ -2019,6 +2184,7 @@
     const dockH = dock.offsetHeight;
     const winW = window.innerWidth;
     const winH = window.innerHeight;
+    const headerH = (mainHeader && mainHeader.style.display !== 'none') ? mainHeader.offsetHeight : 0;
 
     let newL = dockInitLeft + dx;
     let newT = dockInitTop + dy;
@@ -2027,14 +2193,19 @@
     newL = Math.max(6, Math.min(newL, winW - dockW - 6));
     newT = Math.max(6, Math.min(newT, winH - dockH - 6));
 
-    // 磁吸感应预判导引（靠近左侧或右侧边缘时亮起磁力光晕）
-    const distToLeft = newL;
-    const distToRight = winW - (newL + dockW);
+    // 计算到 4 个边缘的净距离
+    const distLeft = newL;
+    const distRight = winW - (newL + dockW);
+    const distTop = isCleanMode ? newT : Math.max(0, newT - headerH);
+    const distBottom = winH - (newT + dockH);
 
-    if (distToLeft < DOCK_SNAP_THRESHOLD) {
-      dockSnapGuide.className = 'dock-snap-guide guide-left';
-    } else if (distToRight < DOCK_SNAP_THRESHOLD) {
-      dockSnapGuide.className = 'dock-snap-guide guide-right';
+    const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+    if (minDist < DOCK_SNAP_THRESHOLD) {
+      if (minDist === distLeft) dockSnapGuide.className = 'dock-snap-guide guide-left';
+      else if (minDist === distRight) dockSnapGuide.className = 'dock-snap-guide guide-right';
+      else if (minDist === distTop) dockSnapGuide.className = 'dock-snap-guide guide-top';
+      else if (minDist === distBottom) dockSnapGuide.className = 'dock-snap-guide guide-bottom';
     } else {
       dockSnapGuide.className = 'dock-snap-guide';
     }
@@ -2062,22 +2233,43 @@
     const dockH = dock.offsetHeight;
     const winW = window.innerWidth;
     const winH = window.innerHeight;
+    const headerH = (mainHeader && mainHeader.style.display !== 'none') ? mainHeader.offsetHeight : 0;
 
     const currentLeft = parseFloat(dock.style.left) || dock.getBoundingClientRect().left;
     const currentTop = parseFloat(dock.style.top) || dock.getBoundingClientRect().top;
+
+    // 计算到 4 个边缘的净距离，决定吸附方位
+    const distLeft = currentLeft;
+    const distRight = winW - (currentLeft + dockW);
+    const distTop = isCleanMode ? currentTop : Math.max(0, currentTop - headerH);
+    const distBottom = winH - (currentTop + dockH);
+
+    const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+    let targetSide = 'left';
+    if (minDist === distLeft) targetSide = 'left';
+    else if (minDist === distRight) targetSide = 'right';
+    else if (minDist === distTop) targetSide = 'top';
+    else if (minDist === distBottom) targetSide = 'bottom';
+
     const dockCenterX = currentLeft + dockW / 2;
-
-    // 智能吸附到最近的一侧边缘（左半屏吸附靠左，右半屏吸附靠右）
-    const targetSide = (dockCenterX < winW / 2) ? 'left' : 'right';
-
-    // 垂直方向若靠近视口中段（50px以内），自动磁吸至正居中
     const dockCenterY = currentTop + dockH / 2;
-    let targetTopRatio = dockCenterY / winH;
-    if (Math.abs(dockCenterY - winH / 2) < 50) {
-      targetTopRatio = 0.5;
+
+    let ratio = 0.5;
+    if (targetSide === 'left' || targetSide === 'right') {
+      ratio = dockCenterY / winH;
+      // 垂直中点磁吸
+      if (Math.abs(dockCenterY - winH / 2) < 55) {
+        ratio = 0.5;
+      }
+    } else {
+      ratio = dockCenterX / winW;
+      // 水平中点磁吸
+      if (Math.abs(dockCenterX - winW / 2) < 65) {
+        ratio = 0.5;
+      }
     }
 
-    applyDockSnap(targetSide, targetTopRatio, true);
+    applyDockSnap(targetSide, ratio, true);
   }
 
   dock.addEventListener('pointerup', onDockDragEnd);
@@ -2086,14 +2278,15 @@
   // 窗口调整大小时自动重新吸附贴边，保证不溢出屏幕
   window.addEventListener('resize', () => {
     if (!isDockDragging) {
-      let topRatio = 0.5;
+      let ratio = 0.5;
       try {
         const saved = localStorage.getItem('pipcast_dock_pref');
         if (saved) {
-          topRatio = JSON.parse(saved).topRatio || 0.5;
+          const parsed = JSON.parse(saved);
+          ratio = parsed.ratio || parsed.topRatio || 0.5;
         }
       } catch (_) {}
-      applyDockSnap(dockCurrentSide, topRatio, false);
+      applyDockSnap(dockCurrentSide, ratio, false);
     }
   });
 
