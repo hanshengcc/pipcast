@@ -288,6 +288,57 @@
       background: rgba(255, 255, 255, 0.12);
     }
 
+    /* 镜头自由拖拽缩放手柄 */
+    .cam-resize-handle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--bg-surface);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      z-index: 70;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: nwse-resize;
+      touch-action: none;
+    }
+
+    .cam-resize-handle::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    #cam-bubble:hover .cam-resize-handle {
+      opacity: 1;
+    }
+
+    .cam-resize-handle:hover {
+      transform: scale(1.25);
+      background: var(--accent);
+    }
+    .cam-resize-handle:hover::after {
+      background: #fff;
+    }
+
+    .handle-br {
+      bottom: -4px;
+      right: -4px;
+      cursor: nwse-resize;
+    }
+
+    .handle-tl {
+      top: -4px;
+      left: -4px;
+      cursor: nwse-resize;
+    }
+
     /* 摄像头未开启时的占位状态 */
     .cam-placeholder {
       position: absolute;
@@ -655,6 +706,12 @@
       <button class="cam-tool-btn" id="btnHoverShape" title="切换形状 (快捷键: S)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
       </button>
+      <button class="cam-tool-btn" id="btnZoomOut" title="缩小镜头尺寸">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="cam-tool-btn" id="btnZoomIn" title="放大镜头尺寸">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <button class="cam-tool-btn" id="btnHoverMirror" title="水平镜像翻转">
         <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
       </button>
@@ -662,6 +719,10 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       </button>
     </div>
+
+    <!-- 拖拽缩放手柄（支持从右下角与左上角自由拖拽缩放） -->
+    <div class="cam-resize-handle handle-br" id="camResizeBR" title="拖拽手柄自由缩放镜头"></div>
+    <div class="cam-resize-handle handle-tl" id="camResizeTL" title="拖拽手柄自由缩放镜头"></div>
 
     <!-- 气泡形状遮罩层 -->
     <div class="cam-inner-wrapper shape-circle" id="cam-wrapper">
@@ -844,8 +905,12 @@
   const heroBtnCam = document.getElementById('heroBtnCam');
 
   const btnHoverShape = document.getElementById('btnHoverShape');
+  const btnZoomOut = document.getElementById('btnZoomOut');
+  const btnZoomIn = document.getElementById('btnZoomIn');
   const btnHoverMirror = document.getElementById('btnHoverMirror');
   const btnHoverBorder = document.getElementById('btnHoverBorder');
+  const camResizeBR = document.getElementById('camResizeBR');
+  const camResizeTL = document.getElementById('camResizeTL');
 
   const btnCleanMode = document.getElementById('btnCleanMode');
   const btnHelp = document.getElementById('btnHelp');
@@ -1099,29 +1164,140 @@
     camVideo.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
   });
 
+  // 自由缩放统一调度函数
+  function setBubbleSize(newSize, anchor = 'center') {
+    newSize = Math.max(80, Math.min(540, Math.round(newSize)));
+    const sr = stage.getBoundingClientRect();
+    const br = camBubble.getBoundingClientRect();
+
+    const oldW = camBubble.offsetWidth;
+    const currentL = br.left - sr.left;
+    const currentT = br.top - sr.top;
+
+    let newL = currentL;
+    let newT = currentT;
+
+    if (anchor === 'center') {
+      newL = currentL - (newSize - oldW) / 2;
+      newT = currentT - (newSize - oldW) / 2;
+    } else if (anchor === 'tl') {
+      newL = currentL - (newSize - oldW);
+      newT = currentT - (newSize - oldW);
+    }
+
+    newL = Math.max(10, Math.min(newL, sr.width - newSize - 10));
+    newT = Math.max(10, Math.min(newT, sr.height - newSize - 10));
+
+    camBubble.style.bottom = 'auto';
+    camBubble.style.right = 'auto';
+    camBubble.style.left = `${newL}px`;
+    camBubble.style.top = `${newT}px`;
+    camBubble.style.width = `${newSize}px`;
+    camBubble.style.height = `${newSize}px`;
+  }
+
+  // 1. 悬停栏放大与缩小按钮 (+ / -)
+  if (btnZoomIn) {
+    btnZoomIn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setBubbleSize(camBubble.offsetWidth + 25, 'center');
+    });
+  }
+  if (btnZoomOut) {
+    btnZoomOut.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setBubbleSize(camBubble.offsetWidth - 25, 'center');
+    });
+  }
+
+  // 2. 底部 Dock 尺寸预设轮换
+  const sizePresets = [120, 180, 240, 320, 420];
+  let presetIdx = 1;
   btnDockSize.addEventListener('click', () => {
-    currentSizeIdx = (currentSizeIdx + 1) % sizes.length;
-    const s = sizes[currentSizeIdx];
-    camBubble.style.width = `${s}px`;
-    camBubble.style.height = `${s}px`;
-    showToast(`尺寸: ${s}px`);
+    presetIdx = (presetIdx + 1) % sizePresets.length;
+    setBubbleSize(sizePresets[presetIdx], 'center');
   });
 
-  // 滚轮无级缩放气泡
+  // 3. 鼠标滚轮 / 触摸板双指无级缩放（配置 passive: false 确保正常响应）
   camBubble.addEventListener('wheel', (e) => {
     e.preventDefault();
-    let w = camBubble.offsetWidth;
-    w = e.deltaY < 0 ? Math.min(w + 14, 360) : Math.max(w - 14, 90);
-    camBubble.style.width = `${w}px`;
-    camBubble.style.height = `${w}px`;
-  });
+    const step = e.deltaY < 0 ? 16 : -16;
+    setBubbleSize(camBubble.offsetWidth + step, 'center');
+  }, { passive: false });
 
-  // 自由拖拽定位
+  // 4. 双角手柄拖拽自由缩放
+  let isResizing = false;
+  let resizeStartX, resizeStartY, resizeStartW, resizeStartL, resizeStartT, currentHandleType;
+
+  function onResizeStart(e, type) {
+    e.stopPropagation();
+    e.preventDefault();
+    isResizing = true;
+    currentHandleType = type;
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    resizeStartW = camBubble.offsetWidth;
+
+    const sr = stage.getBoundingClientRect();
+    const br = camBubble.getBoundingClientRect();
+    resizeStartL = br.left - sr.left;
+    resizeStartT = br.top - sr.top;
+
+    e.target.setPointerCapture(e.pointerId);
+  }
+
+  function onResizeMove(e) {
+    if (!isResizing) return;
+    const dx = e.clientX - resizeStartX;
+    const dy = e.clientY - resizeStartY;
+    const delta = (dx + dy) / 2;
+    const sr = stage.getBoundingClientRect();
+
+    if (currentHandleType === 'br') {
+      const newSize = Math.max(80, Math.min(540, resizeStartW + delta));
+      camBubble.style.width = `${newSize}px`;
+      camBubble.style.height = `${newSize}px`;
+    } else if (currentHandleType === 'tl') {
+      const newSize = Math.max(80, Math.min(540, resizeStartW - delta));
+      let newL = resizeStartL - (newSize - resizeStartW);
+      let newT = resizeStartT - (newSize - resizeStartW);
+      newL = Math.max(10, Math.min(newL, sr.width - newSize - 10));
+      newT = Math.max(10, Math.min(newT, sr.height - newSize - 10));
+
+      camBubble.style.left = `${newL}px`;
+      camBubble.style.top = `${newT}px`;
+      camBubble.style.width = `${newSize}px`;
+      camBubble.style.height = `${newSize}px`;
+    }
+  }
+
+  function onResizeEnd(e) {
+    if (!isResizing) return;
+    isResizing = false;
+    e.target.releasePointerCapture(e.pointerId);
+    showToast(`镜头尺寸: ${camBubble.offsetWidth}px`);
+  }
+
+  if (camResizeBR) {
+    camResizeBR.addEventListener('pointerdown', (e) => onResizeStart(e, 'br'));
+    camResizeBR.addEventListener('pointermove', onResizeMove);
+    camResizeBR.addEventListener('pointerup', onResizeEnd);
+    camResizeBR.addEventListener('pointercancel', onResizeEnd);
+  }
+
+  if (camResizeTL) {
+    camResizeTL.addEventListener('pointerdown', (e) => onResizeStart(e, 'tl'));
+    camResizeTL.addEventListener('pointermove', onResizeMove);
+    camResizeTL.addEventListener('pointerup', onResizeEnd);
+    camResizeTL.addEventListener('pointercancel', onResizeEnd);
+  }
+
+  // 5. 自由拖拽定位（避开缩放手柄与按钮）
   let isDragging = false;
   let dragX, dragY, initL, initT;
 
   camBubble.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button') || e.target.closest('.cam-resize-handle')) return;
     isDragging = true;
     dragX = e.clientX;
     dragY = e.clientY;
