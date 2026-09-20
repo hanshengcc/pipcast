@@ -854,7 +854,8 @@
   let recordedBlob = null;
 
   let isCameraActive = false;
-  let isMicActive = true;
+  let isMicActive = false;
+  let isRequestingMic = false;
   let isRecording = false;
   let isCleanMode = false;
   let isMirrored = true;
@@ -1062,32 +1063,48 @@
      ========================================================= */
 
   async function setupMic() {
-    if (!audioContext) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      audioContext = new AudioCtx();
-    }
-    if (audioContext.state === 'suspended') await audioContext.resume();
+    if (isRequestingMic) return micStream;
+    isRequestingMic = true;
 
-    if (!micStream || !micStream.active) {
-      try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err) {
-        console.warn('Mic declined:', err);
-        showToast('麦克风未授权');
-        isMicActive = false;
-        btnDockMic.classList.remove('active');
-        return;
+    try {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
       }
-    }
+      if (audioContext.state === 'suspended') {
+        try { await audioContext.resume(); } catch (e) {}
+      }
 
-    if (micStream && micStream.getAudioTracks().length > 0) {
-      try {
-        const source = audioContext.createMediaStreamSource(micStream);
-        analyserNode = audioContext.createAnalyser();
-        analyserNode.fftSize = 32;
-        source.connect(analyserNode);
-        runAudioLoop();
-      } catch (e) {}
+      if (!micStream || !micStream.active) {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
+      isMicActive = true;
+      btnDockMic.classList.add('active');
+
+      if (micStream && micStream.getAudioTracks().length > 0) {
+        micStream.getAudioTracks().forEach(t => t.enabled = true);
+        if (!analyserNode) {
+          const source = audioContext.createMediaStreamSource(micStream);
+          analyserNode = audioContext.createAnalyser();
+          analyserNode.fftSize = 32;
+          source.connect(analyserNode);
+          runAudioLoop();
+        }
+      }
+      isRequestingMic = false;
+      return micStream;
+    } catch (err) {
+      console.warn('Mic access failed:', err);
+      isMicActive = false;
+      btnDockMic.classList.remove('active');
+      isRequestingMic = false;
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        showToast('麦克风权限未开启，请在浏览器或系统设置中允许');
+      } else {
+        showToast('未检测到可用麦克风');
+      }
+      return null;
     }
   }
 
@@ -1119,23 +1136,24 @@
   }
 
   btnDockMic.addEventListener('click', async () => {
-    isMicActive = !isMicActive;
-    if (isMicActive) {
-      btnDockMic.classList.add('active');
-      await setupMic();
-      showToast('麦克风收音已开启');
-    } else {
-      btnDockMic.classList.remove('active');
-      if (micStream) {
-        micStream.getTracks().forEach(t => t.stop());
-        micStream = null;
+    if (!micStream || !micStream.active) {
+      const stream = await setupMic();
+      if (stream) {
+        showToast('麦克风收音已开启');
       }
-      showToast('麦克风已静音');
+    } else {
+      isMicActive = !isMicActive;
+      micStream.getAudioTracks().forEach(t => t.enabled = isMicActive);
+      btnDockMic.classList.toggle('active', isMicActive);
+      showToast(isMicActive ? '麦克风已开启' : '麦克风已静音');
     }
   });
 
+  // 仅在首次用户手势时恢复 AudioContext，绝不滥触发 getUserMedia
   document.addEventListener('click', () => {
-    if (!audioContext && isMicActive) setupMic();
+    if (audioContext && audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
   }, { once: true });
 
   /* =========================================================
