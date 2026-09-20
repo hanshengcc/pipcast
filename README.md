@@ -1,14 +1,15 @@
 # 🎥 PipCast
 
 > **Free-shape floating webcam bubble meets frictionless in-browser 60 FPS screen recorder.**  
-> An open-source, zero-install, 100% offline alternative to Loom. Record your screen, your floating facecam, and crystal-clear audio with a single click.
+> **100% Cross-Platform (macOS · Windows · Linux · ChromeOS)** · An open-source, zero-install, 100% offline alternative to Loom. Record your screen, your floating facecam, and crystal-clear audio with a single click.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero Dependency](https://img.shields.io/badge/Dependencies-Zero-emerald.svg)](#)
 [![100% Offline](https://img.shields.io/badge/Privacy-100%25%20Local-purple.svg)](#)
 [![Performance](https://img.shields.io/badge/Render-60%20FPS%20Dual--Engine-cyan.svg)](#)
 [![Resolution](https://img.shields.io/badge/Quality-1080P%20%7C%202K%2060FPS-rose.svg)](#)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-orange.svg)](#)
+[![Cross Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20ChromeOS-orange.svg)](#)
+[![Browsers](https://img.shields.io/badge/Browsers-Chrome%20%7C%20Edge%20%7C%20Brave%20%7C%20Safari-green.svg)](#)
 [![Language](https://img.shields.io/badge/Language-中文%20%7C%20English-blueviolet.svg)](README_CN.md)
 
 [🇨🇳 简体中文文档](README_CN.md) | **English Documentation**
@@ -25,6 +26,7 @@ Recording presentations, tutorials, bug walk-throughs, and software demos should
 
 | Dimension | ☁️ Loom / Cloud Apps | 🎙️ OBS Studio | 🍏 QuickTime / Native | ⚡ **PipCast** |
 | :--- | :--- | :--- | :--- | :--- |
+| **Cross-Platform** | Requires extension / Electron app | Heavy OS-specific installers | macOS only (QuickTime) | **🌐 100% Universal: macOS, Windows, Linux, ChromeOS** |
 | **Camera Shapes** | Rigid circle or square | Complex manual alpha masks | Rigid rectangular window | **Circle, Squircle (28%), Rounded, Hexagon, Oval** |
 | **Installation** | Heavy extension or electron app | Multi-GB install & complex scene setup | Preinstalled, but no facecam compositing | **0 Install: Pure single-file browser app** |
 | **Background Tab Recording** | Often throttles in browser extensions | Background-native | N/A | **Dual-Engine Worker: Solid 60 FPS, never freezes** |
@@ -75,27 +77,46 @@ Seamlessly swap between built-in webcams, studio displays, USB mics, and wireles
 - **Zero Background Freezing**: Browsers aggressively throttle background tabs, reducing `requestAnimationFrame` to 0 FPS and causing recordings of other tabs to look like frozen screenshots.
 - **The PipCast Solution**: Combines an unthrottled **Web Worker interval timer (16.6ms)** with an inaudible **Web Audio keep-alive oscillator (`gain: 0.00001`)**, completely exempting the tab from Chrome background process suspension. Recordings remain silky smooth at 60 FPS even when you switch tabs or minimize the window!
 
-### 🧲 3. 4-Way Magnetic Dock Snapping
+### 🌐 3. Truly 100% Cross-Platform & Hardware Agnostic
+- **Run Anywhere with a Modern Browser**: Built strictly on W3C standard Web APIs (`getDisplayMedia`, `getUserMedia`, `<canvas>`, Web Audio, Web Worker, MediaRecorder). Zero OS-specific native binaries, drivers, or kernel extensions required!
+- **🍏 macOS**: Native support for Apple Silicon (M1–M4) & Intel, FaceTime HD cameras, studio displays, and wireless **iPhone Continuity Camera**.
+- **🪟 Windows 10 & 11**: DirectShow webcams, WASAPI audio mixing, high-DPI display scaling, and multi-monitor screen picker out of the box (with 1-click `scripts\start.bat`).
+- **🐧 Linux (Ubuntu, Fedora, Arch, Debian)**: Wayland & X11 screen and audio capture via Desktop Portal (PipeWire / PulseAudio) and V4L2 webcams with zero ALSA configuration headaches (with `scripts/start.sh`).
+- **💻 ChromeOS & Lightweight Laptops**: Ultra-low CPU and memory footprints. Runs buttery smooth even on Chromebooks and older hardware.
+
+### 🧲 4. 4-Way Magnetic Dock Snapping
 - **Proximity Magnetism**: Drag the floating control Dock near any screen edge (Left, Right, Top, Bottom) to trigger an elastic snap animation with glowing magnetic guides.
 - **Responsive Layout Switching**: Automatically adapts between vertical pill and horizontal bar layouts based on edge orientation.
 
-### 🎬 4. Recording Quality Presets
+### 🎬 5. Recording Quality Presets
 - **1080P Super HD (Default)**: 1920×1080 · 60 FPS · 8 Mbps (recommended for coding, demos, and presentations).
 - **720P Smooth**: 1280×720 · 30 FPS · 3 Mbps (compact file sizes, fast exports).
 - **2K Studio Master**: 2560×1440 · 60 FPS · 16 Mbps (maximum fidelity for high-DPI Retina displays).
 
-### ✂️ 5. Interactive Region & Tab Crop Capture (`R` Key)
+### ✂️ 6. Interactive Region & Tab Crop Capture (`R` Key)
 - **8-Handle Bounding Box**: Drag corners and edges to isolate exact window areas.
 - **Remove Tab Bar**: One-click preset crops out the browser's top tabs and URL navigation bar.
 - **16:9 Aspect Ratio Lock**: Instantly conform any cropped region to YouTube/Bilibili presentation standards.
 
-### 🎙️ 6. Live Audio Level Visualizer & Mixer
+### 🎙️ 7. Live Audio Level Visualizer & Mixer
 - **Real-Time LED Meter**: Web Audio API audio analyzer with 3-bar jumping sound waves. You will never accidentally record a presentation on mute again.
 - **Hardware Switcher**: Right-click on the microphone icon to hot-swap inputs (built-in mic, AirPods, USB audio interfaces).
 - **System Audio Mixing**: Seamlessly mix microphone voiceover with system or browser tab audio.
 
-### 🎬 7. Clean Presentation Mode (`H` Key)
+### 🎬 8. Clean Presentation Mode (`H` Key)
 - Press **`H`** at any moment to hide all docks, toolbars, and header menus, leaving only your presentation content and floating facecam.
+
+---
+
+## 🌐 Platform & Browser Compatibility
+
+| Browser | Windows 10 / 11 | macOS (Intel / M-Series) | Linux (X11 / Wayland) | ChromeOS |
+| :--- | :---: | :---: | :---: | :---: |
+| **Google Chrome** | ✅ 60 FPS Full Support | ✅ 60 FPS Full Support | ✅ 60 FPS Full Support | ✅ 60 FPS Full Support |
+| **Microsoft Edge** | ✅ 60 FPS Full Support | ✅ 60 FPS Full Support | ✅ 60 FPS Full Support | — |
+| **Brave / Vivaldi / Opera** | ✅ Full Support | ✅ Full Support | ✅ Full Support | — |
+| **Apple Safari** | — | ✅ Supported (16.4+) | — | — |
+| **Mozilla Firefox** | ✅ Supported | ✅ Supported | ✅ Supported | — |
 
 ---
 
@@ -114,29 +135,36 @@ Seamlessly swap between built-in webcams, studio displays, USB mics, and wireles
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start by Operating System
 
 PipCast has **zero build steps, zero node_modules, and zero dependencies**.
 
-### Option 1: Double-Click Launcher (Recommended for macOS)
+### 🍏 macOS (Intel & Apple Silicon)
 Double-click **`start.command`** in the project root.
 - Starts a zero-overhead local studio server on `http://localhost:8000`.
 - Grants 100% full macOS hardware camera and screen capture entitlements.
 
-### Option 2: Command Line (macOS / Linux / Windows)
+### 🪟 Windows (10 & 11)
+Double-click **`scripts\start.bat`** (or execute in PowerShell / CMD).
+- Automatically detects Python or Node and launches your default browser at `http://localhost:8000`.
+
+### 🐧 Linux (Ubuntu, Fedora, Arch, Debian)
+Run the launcher script from terminal:
 ```bash
-# macOS & Linux
+chmod +x ./scripts/start.sh
 ./scripts/start.sh
-
-# Windows
-.\scripts\start.bat
-
-# Or using Python / Node directly
-python3 -m http.server 8000
-# or: npx serve -l 8000 .
 ```
 
-### Option 3: Direct File
+### 🌐 Universal CLI (Any OS with Python or Node)
+```bash
+# Using Python
+python3 -m http.server 8000
+
+# Or using Node
+npx serve -l 8000 .
+```
+
+### 📂 Direct File Opening
 Open **`index.html`** directly in Chrome, Edge, or Safari.  
 *(Note: Chromium security policies require `http://localhost:8000` to enable microphone capture; screen recording and camera work out of the box on `file://`).*
 
