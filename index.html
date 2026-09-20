@@ -375,63 +375,69 @@
       font-weight: 600;
     }
 
-    /* 极简精致底部控制 Dock（纯图标设计，如 Dynamic Island） */
+    /* 极简精致左侧竖列控制 Dock */
     #dock {
       position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
-      padding: 6px 14px;
-      border-radius: 999px;
+      padding: 10px 8px;
+      border-radius: 20px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
-      z-index: 350; /* 确保永远在最前层，绝对不被任何内容遮挡 */
+      gap: 7px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      z-index: 350; /* 确保永远在最前层 */
       transition: opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
 
     #dock.recording-active {
       border-color: rgba(244, 63, 94, 0.5);
-      box-shadow: 0 16px 40px rgba(244, 63, 94, 0.3);
+      box-shadow: 0 16px 40px rgba(244, 63, 94, 0.35);
     }
 
     #dock.hidden-ui {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(24px);
+      transform: translateY(-50%) translateX(-40px);
     }
 
     .dock-divider {
-      width: 1px;
-      height: 20px;
+      width: 24px;
+      height: 1px;
       background: rgba(255, 255, 255, 0.12);
-      margin: 0 2px;
+      margin: 2px 0;
     }
 
     /* 精致轻量图标按钮 */
     .icon-btn {
       font-family: inherit;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 500;
       background: rgba(255, 255, 255, 0.05);
       color: var(--text);
       border: 1px solid transparent;
-      border-radius: 999px;
-      padding: 7px 12px;
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
       cursor: pointer;
       display: inline-flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 2px;
       transition: all 0.18s ease;
+      position: relative;
     }
 
     .icon-btn svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       stroke: currentColor;
       stroke-width: 2;
       fill: none;
@@ -439,7 +445,7 @@
 
     .icon-btn:hover {
       background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
+      transform: scale(1.06);
     }
 
     .icon-btn.active {
@@ -449,27 +455,67 @@
     }
 
     .icon-btn-pure {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       padding: 0;
       justify-content: center;
-      border-radius: 50%;
+      border-radius: 12px;
+    }
+
+    /* 悬停向右侧展开的轻量 Tooltip */
+    .dock-tooltip {
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-6px);
+      background: rgba(20, 24, 33, 0.96);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      color: #f1f5f9;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 7px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.18s ease;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      z-index: 400;
+    }
+
+    .dock-tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: transparent rgba(20, 24, 33, 0.96) transparent transparent;
+    }
+
+    .icon-btn:hover .dock-tooltip,
+    .btn-record-pill:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
     }
 
     /* 麦克风跳动电平 */
     .audio-meter {
       display: flex;
       align-items: flex-end;
+      justify-content: center;
       gap: 2px;
-      height: 12px;
-      width: 16px;
-      margin-left: 2px;
+      height: 5px;
+      width: 14px;
+      margin-top: 1px;
     }
 
     .ab-bar {
       width: 3px;
       background: rgba(255, 255, 255, 0.25);
-      border-radius: 2px;
+      border-radius: 1px;
       height: 25%;
       transition: height 0.08s ease, background-color 0.1s;
     }
@@ -478,18 +524,19 @@
     /* 录制时间显示 */
     .timer-badge {
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
       color: #cbd5e1;
-      padding: 0 4px;
+      padding: 2px 4px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      letter-spacing: -0.3px;
     }
 
     .rec-pulse-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--accent-red);
       display: none;
@@ -505,27 +552,28 @@
       background: linear-gradient(135deg, #f43f5e, #e11d48);
       color: #fff;
       border: none;
-      padding: 8px 18px;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 13px;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
       cursor: pointer;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
       box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35);
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
 
     .btn-record-pill svg {
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       fill: currentColor;
     }
 
     .btn-record-pill:hover {
       box-shadow: 0 6px 18px rgba(244, 63, 94, 0.5);
-      transform: translateY(-1px);
+      transform: scale(1.06);
     }
 
     .btn-record-pill.recording {
@@ -543,6 +591,103 @@
       50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(244, 63, 94, 0.8); }
       100% { transform: scale(1); }
     }
+
+    /* 交互式框选裁剪层 */
+    #crop-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      display: none;
+    }
+
+    #crop-overlay.active {
+      display: block;
+      pointer-events: auto;
+    }
+
+    #crop-box {
+      position: absolute;
+      border: 2px dashed #38bdf8;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+      border-radius: 4px;
+      cursor: move;
+      user-select: none;
+      touch-action: none;
+      transition: border-color 0.2s;
+    }
+
+    #crop-toolbar {
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 24, 33, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+      pointer-events: auto;
+    }
+
+    #crop-dim-text {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: #94a3b8;
+      padding-right: 4px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .crop-tool-btn {
+      font-family: inherit;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .crop-tool-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+
+    .crop-done-btn {
+      background: #0284c7;
+      color: #fff;
+      font-weight: 500;
+    }
+    .crop-done-btn:hover {
+      background: #0369a1;
+    }
+
+    /* 8 个调整手柄 */
+    .crop-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border: 2px solid #0284c7;
+      border-radius: 2px;
+      pointer-events: auto;
+    }
+
+    .ch-tl { top: -5px; left: -5px; cursor: nwse-resize; }
+    .ch-tr { top: -5px; right: -5px; cursor: nesw-resize; }
+    .ch-bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
+    .ch-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .ch-t { top: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+    .ch-b { bottom: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+    .ch-l { top: calc(50% - 5px); left: -5px; cursor: ew-resize; }
+    .ch-r { top: calc(50% - 5px); right: -5px; cursor: ew-resize; }
     .pulse-attention {
       animation: pulse-attention 1.2s infinite ease-in-out;
     }
@@ -682,6 +827,27 @@
   <!-- 屏幕共享渲染层 -->
   <video id="screen-video" autoplay playsinline muted></video>
 
+  <!-- 交互式框选裁剪层 -->
+  <div id="crop-overlay">
+    <div id="crop-box">
+      <div id="crop-toolbar">
+        <span id="crop-dim-text">100% × 100%</span>
+        <button type="button" class="crop-tool-btn" id="cropPresetFull" title="重置为完整屏幕">全屏</button>
+        <button type="button" class="crop-tool-btn" id="cropPresetNoTab" title="裁剪掉标签栏与URL地址栏">去顶栏</button>
+        <button type="button" class="crop-tool-btn" id="cropPreset169" title="锁定标准 16:9 比例">16:9</button>
+        <button type="button" class="crop-tool-btn crop-done-btn" id="cropBtnDone" title="锁定范围并退出编辑模式">完成</button>
+      </div>
+      <div class="crop-handle ch-tl" data-dir="tl"></div>
+      <div class="crop-handle ch-tr" data-dir="tr"></div>
+      <div class="crop-handle ch-bl" data-dir="bl"></div>
+      <div class="crop-handle ch-br" data-dir="br"></div>
+      <div class="crop-handle ch-t" data-dir="t"></div>
+      <div class="crop-handle ch-b" data-dir="b"></div>
+      <div class="crop-handle ch-l" data-dir="l"></div>
+      <div class="crop-handle ch-r" data-dir="r"></div>
+    </div>
+  </div>
+
   <!-- 中心轻量卡片（未共享屏幕时显示） -->
   <div id="welcome-hero">
     <div class="minimal-picker-card">
@@ -734,28 +900,52 @@
     </div>
   </div>
 
-  <!-- 4. 底部极简图标 Dock 栏 -->
+  <!-- 4. 左侧居中极简竖列控制 Dock 栏 -->
   <div id="dock">
+    <!-- 核心录制按钮 -->
+    <button class="btn-record-pill" id="btnRecord" title="开始/停止录制 (快捷键: 空格)">
+      <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
+        <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+      </span>
+      <span class="dock-tooltip" id="recordBtnText">开始录制 (空格)</span>
+    </button>
+
+    <!-- 录制时间显示 -->
+    <div class="timer-badge" id="timerBadge" title="录制时长">
+      <span class="rec-pulse-dot" id="rec-dot"></span>
+      <span id="timer-display">00:00</span>
+    </div>
+
+    <div class="dock-divider"></div>
+
     <!-- 屏幕选择 -->
-    <button class="icon-btn" id="btnDockScreen" title="选择要共享捕获的屏幕/窗口/标签页">
+    <button class="icon-btn" id="btnDockScreen" title="选择屏幕 / 窗口 / 标签页">
       <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      <span id="screenStatusText">屏幕</span>
+      <span class="dock-tooltip" id="screenStatusText">选择屏幕/标签页</span>
+    </button>
+
+    <!-- 框选局部录制范围 -->
+    <button class="icon-btn" id="btnDockCrop" title="指定框选录制范围 (快捷键: R)">
+      <svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+      <span class="dock-tooltip">框选录制范围 (R)</span>
     </button>
 
     <!-- 镜头开关 -->
-    <button class="icon-btn" id="btnDockCam" title="开关悬浮摄像头 (快捷键: C)">
+    <button class="icon-btn" id="btnDockCam" title="开关人像镜头 (快捷键: C)">
       <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-      <span id="camStatusText">镜头</span>
+      <span class="dock-tooltip" id="camStatusText">人像镜头 (C)</span>
     </button>
 
     <!-- 形状切换 -->
     <button class="icon-btn icon-btn-pure" id="btnDockShape" title="切换几何形状 (快捷键: S)">
       <svg viewBox="0 0 24 24"><polygon points="12 2 2 22 22 22"/></svg>
+      <span class="dock-tooltip">镜头形状 (S)</span>
     </button>
 
     <!-- 尺寸缩放 -->
-    <button class="icon-btn icon-btn-pure" id="btnDockSize" title="切换气泡大小 (或在气泡上滑动滚轮)">
+    <button class="icon-btn icon-btn-pure" id="btnDockSize" title="切换镜头尺寸 (或在镜头上滚轮滑动)">
       <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      <span class="dock-tooltip">镜头大小</span>
     </button>
 
     <div class="dock-divider"></div>
@@ -768,22 +958,13 @@
         <div class="ab-bar" id="ab2"></div>
         <div class="ab-bar" id="ab3"></div>
       </div>
+      <span class="dock-tooltip">麦克风 (M)</span>
     </button>
 
-    <div class="dock-divider"></div>
-
-    <!-- 录制时间显示 -->
-    <div class="timer-badge">
-      <span class="rec-pulse-dot" id="rec-dot"></span>
-      <span id="timer-display">00:00</span>
-    </div>
-
-    <!-- 核心录制按钮 -->
-    <button class="btn-record-pill" id="btnRecord">
-      <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
-        <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
-      </span>
-      <span id="recordBtnText">开始录制</span>
+    <!-- 沉浸纯净模式 -->
+    <button class="icon-btn icon-btn-pure" id="btnDockClean" title="沉浸展示模式 (快捷键: H)">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="dock-tooltip">沉浸模式 (H)</span>
     </button>
   </div>
 </main>
@@ -807,7 +988,7 @@
       <span style="font-size: 12px; color: var(--text-muted);" id="rec-info-text">本地生成 · 60 FPS</span>
       <div style="display: flex; gap: 8px;">
         <button class="icon-btn" id="btnDiscard">🗑️ 放弃</button>
-        <button class="btn-record-pill" id="btnDownload" style="background: linear-gradient(135deg, #38bdf8, #2563eb);">
+        <button class="btn-record-pill" id="btnDownload" style="background: linear-gradient(135deg, #38bdf8, #2563eb); width: auto; height: auto; padding: 8px 18px; border-radius: 999px;">
           ⬇️ 下载文件
         </button>
       </div>
@@ -825,10 +1006,11 @@
       </button>
     </div>
     <div style="font-size: 13px; line-height: 1.7; color: #cbd5e1; display: flex; flex-direction: column; gap: 10px;">
-      <div>• <strong>本地文件即开即用</strong>：本应用是 100% 纯本地单文件，直接在浏览器双击打开即可正常调用摄像头与屏幕，无需额外启动任何本地服务器。</div>
+      <div>• <strong>麦克风权限提示</strong>：若在浏览器点击“允许”后仍提示未开启，是因 macOS 系统层拦截。请前往【系统设置 ➔ 隐私与安全性 ➔ 麦克风】确保已勾选允许“Google Chrome”。</div>
+      <div>• <strong>指定框选录制范围</strong>：连接屏幕或标签页后，点击左侧栏的【✂️ 框选范围】或按 <span style="font-family: monospace; color: var(--accent);">R</span>，即可在屏幕上自由拖拽裁剪框，支持“去除网页标签栏”等预设，录制视频仅包含框选区域！</div>
       <div>• <strong>MacBook 外接屏合盖</strong>：若笔记本盖子闭合，macOS 会对自带镜头物理断电。只需掀开屏幕一条缝即可通电。</div>
       <div>• <strong>iPhone 连续互通相机</strong>：若用 iPhone 作为超清镜头，请将 iPhone 保持<strong>黑屏锁屏且横放固定</strong>。</div>
-      <div>• <strong>快捷键</strong>：<span style="font-family: monospace; color: var(--accent);">H</span> 沉浸模式 / <span style="font-family: monospace; color: var(--accent);">S</span> 切换形状 / <span style="font-family: monospace; color: var(--accent);">C</span> 镜头开关 / <span style="font-family: monospace; color: var(--accent);">M</span> 麦克风静音。</div>
+      <div>• <strong>快捷键</strong>：<span style="font-family: monospace; color: var(--accent);">空格</span> 录制/停止 / <span style="font-family: monospace; color: var(--accent);">R</span> 框选范围 / <span style="font-family: monospace; color: var(--accent);">H</span> 沉浸模式 / <span style="font-family: monospace; color: var(--accent);">S</span> 切换形状 / <span style="font-family: monospace; color: var(--accent);">C</span> 镜头开关 / <span style="font-family: monospace; color: var(--accent);">M</span> 麦克风开关。</div>
     </div>
   </div>
 </div>
@@ -865,6 +1047,13 @@
   let isMirrored = true;
   let isSelectingScreen = false;
 
+  let isCropActive = false;
+  let isCropEditing = false;
+  let cropRect = { x: 0, y: 0, w: 1, h: 1 };
+  let cropDragMode = null;
+  let cropStartPointer = { x: 0, y: 0 };
+  let cropStartRect = { x: 0, y: 0, w: 1, h: 1 };
+
   let recordSeconds = 0;
   let timerInterval = null;
 
@@ -891,10 +1080,12 @@
   const mainHeader = document.getElementById('main-header');
   const dock = document.getElementById('dock');
   const btnDockScreen = document.getElementById('btnDockScreen');
+  const btnDockCrop = document.getElementById('btnDockCrop');
   const btnDockCam = document.getElementById('btnDockCam');
   const btnDockShape = document.getElementById('btnDockShape');
   const btnDockSize = document.getElementById('btnDockSize');
   const btnDockMic = document.getElementById('btnDockMic');
+  const btnDockClean = document.getElementById('btnDockClean');
   const btnRecord = document.getElementById('btnRecord');
   const recordBtnText = document.getElementById('recordBtnText');
   const recordIconWrapper = document.getElementById('recordIconWrapper');
@@ -905,6 +1096,14 @@
   const timerDisplay = document.getElementById('timer-display');
   const screenStatusText = document.getElementById('screenStatusText');
   const camStatusText = document.getElementById('camStatusText');
+
+  const cropOverlay = document.getElementById('crop-overlay');
+  const cropBox = document.getElementById('crop-box');
+  const cropDimText = document.getElementById('crop-dim-text');
+  const cropPresetFull = document.getElementById('cropPresetFull');
+  const cropPresetNoTab = document.getElementById('cropPresetNoTab');
+  const cropPreset169 = document.getElementById('cropPreset169');
+  const cropBtnDone = document.getElementById('cropBtnDone');
 
   const heroBtnScreen = document.getElementById('heroBtnScreen');
   const heroBtnCam = document.getElementById('heroBtnCam');
@@ -1037,12 +1236,16 @@
       screenStream.getVideoTracks()[0].onended = () => {
         screenVideo.style.display = 'none';
         screenStream = null;
+        isCropActive = false;
+        isCropEditing = false;
+        if (cropOverlay) cropOverlay.classList.remove('active');
+        if (btnDockCrop) btnDockCrop.classList.remove('active');
         btnDockScreen.classList.remove('active');
-        screenStatusText.innerText = '屏幕';
+        screenStatusText.innerText = '选择屏幕/标签页';
         if (!isCameraActive) welcomeHero.style.display = 'flex';
         if (isRecording) stopRecording();
       };
-      showToast('屏幕已连接');
+      showToast('屏幕已连接！可点击左侧【✂️ 框选】指定录制区域');
     } catch (e) {
       if (e.name !== 'NotAllowedError') {
         console.warn('Screen selection:', e);
@@ -1056,7 +1259,7 @@
   heroBtnScreen.addEventListener('click', async () => {
     await selectScreen();
     if (screenStream) {
-      showToast('屏幕已连接！点击下方【🔴 开始录制】或按空格键');
+      showToast('屏幕已连接！点击左侧【🔴 录制】或按空格键');
       btnRecord.classList.add('pulse-attention');
     }
   });
@@ -1064,7 +1267,7 @@
   heroBtnCam.addEventListener('click', () => {
     welcomeHero.style.display = 'none';
     if (!isCameraActive) initCamera();
-    showToast('人像镜头已就绪！点击下方【🔴 开始录制】或按空格键');
+    showToast('人像镜头已就绪！点击左侧【🔴 录制】或按空格键');
     btnRecord.classList.add('pulse-attention');
   });
 
@@ -1074,48 +1277,66 @@
 
   async function setupMic() {
     if (isRequestingMic) return micStream;
+    if (micStream && micStream.active && isMicActive) return micStream;
     isRequestingMic = true;
 
     try {
-      if (!audioContext) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        audioContext = new AudioCtx();
-      }
-      if (audioContext.state === 'suspended') {
-        try { await audioContext.resume(); } catch (e) {}
-      }
-
       if (!micStream || !micStream.active) {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
       }
-
-      isMicActive = true;
-      btnDockMic.classList.add('active');
-
-      if (micStream && micStream.getAudioTracks().length > 0) {
-        micStream.getAudioTracks().forEach(t => t.enabled = true);
-        if (!analyserNode) {
-          const source = audioContext.createMediaStreamSource(micStream);
-          analyserNode = audioContext.createAnalyser();
-          analyserNode.fftSize = 32;
-          source.connect(analyserNode);
-          runAudioLoop();
-        }
-      }
-      isRequestingMic = false;
-      return micStream;
     } catch (err) {
-      console.warn('Mic access failed:', err);
+      console.warn('Mic getUserMedia failed:', err);
       isMicActive = false;
       btnDockMic.classList.remove('active');
       isRequestingMic = false;
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        showToast('麦克风权限未开启，请在浏览器或系统设置中允许');
+
+      const isSystemDenied = err.message && (
+        err.message.toLowerCase().includes('system') ||
+        err.message.toLowerCase().includes('os') ||
+        err.message.toLowerCase().includes('denied')
+      );
+
+      if (isSystemDenied || err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        showToast('⚠️ 麦克风受限：请在【Mac系统设置 -> 隐私与安全性 -> 麦克风】勾选 Chrome，并在网页中允许');
+      } else if (err.name === 'NotFoundError') {
+        showToast('未检测到可用的麦克风硬件');
       } else {
-        showToast('未检测到可用麦克风');
+        showToast('麦克风启动异常: ' + (err.message || err.name));
       }
       return null;
+    } finally {
+      isRequestingMic = false;
     }
+
+    isMicActive = true;
+    btnDockMic.classList.add('active');
+    micStream.getAudioTracks().forEach(t => t.enabled = true);
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!audioContext) audioContext = new AudioCtx();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+      }
+      if (!analyserNode) {
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 32;
+        source.connect(analyserNode);
+        runAudioLoop();
+      }
+    } catch (audioErr) {
+      console.warn('Audio meter setup warning (non-fatal):', audioErr);
+    }
+
+    showToast('🎙️ 麦克风收音已就绪');
+    return micStream;
   }
 
   function runAudioLoop() {
@@ -1165,6 +1386,216 @@
       audioContext.resume().catch(() => {});
     }
   }, { once: true });
+
+  /* =========================================================
+     3.5 框选局部范围与裁剪录制 (Region / Crop Capture)
+     ========================================================= */
+
+  function getScreenVideoRenderedRect() {
+    const sr = stage.getBoundingClientRect();
+    if (!screenVideo.videoWidth || !screenVideo.videoHeight) {
+      return { left: 0, top: 0, width: sr.width, height: sr.height };
+    }
+    const videoRatio = screenVideo.videoWidth / screenVideo.videoHeight;
+    const stageRatio = sr.width / sr.height;
+    let w, h, left, top;
+    if (videoRatio > stageRatio) {
+      w = sr.width;
+      h = sr.width / videoRatio;
+      left = 0;
+      top = (sr.height - h) / 2;
+    } else {
+      h = sr.height;
+      w = sr.height * videoRatio;
+      left = (sr.width - w) / 2;
+      top = 0;
+    }
+    return { left, top, width: w, height: h };
+  }
+
+  function updateCropBoxDOM() {
+    if (!cropBox) return;
+    const vr = getScreenVideoRenderedRect();
+    const boxLeft = vr.left + cropRect.x * vr.width;
+    const boxTop = vr.top + cropRect.y * vr.height;
+    const boxWidth = cropRect.w * vr.width;
+    const boxHeight = cropRect.h * vr.height;
+
+    cropBox.style.left = `${boxLeft}px`;
+    cropBox.style.top = `${boxTop}px`;
+    cropBox.style.width = `${boxWidth}px`;
+    cropBox.style.height = `${boxHeight}px`;
+
+    const pxW = Math.round(cropRect.w * (screenVideo.videoWidth || 1920));
+    const pxH = Math.round(cropRect.h * (screenVideo.videoHeight || 1080));
+    const pctW = Math.round(cropRect.w * 100);
+    const pctH = Math.round(cropRect.h * 100);
+    if (cropDimText) cropDimText.innerText = `${pxW}×${pxH} (${pctW}%)`;
+  }
+
+  function toggleCropMode() {
+    if (!screenStream) {
+      showToast('请先连接屏幕或标签页，再指定框选范围');
+      selectScreen();
+      return;
+    }
+    isCropEditing = !isCropEditing;
+    if (isCropEditing) {
+      cropOverlay.classList.add('active');
+      btnDockCrop.classList.add('active');
+      updateCropBoxDOM();
+      showToast('✂️ 已开启框选：拖拽边角可自定义录制区域，双击重置全屏');
+    } else {
+      cropOverlay.classList.remove('active');
+      if (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001) {
+        isCropActive = true;
+        btnDockCrop.classList.add('active');
+        showToast(`已锁定框选区域 (${Math.round(cropRect.w * 100)}% × ${Math.round(cropRect.h * 100)}%)`);
+      } else {
+        isCropActive = false;
+        btnDockCrop.classList.remove('active');
+        showToast('已恢复全屏录制');
+      }
+    }
+  }
+
+  if (btnDockCrop) btnDockCrop.addEventListener('click', toggleCropMode);
+  if (btnDockClean) btnDockClean.addEventListener('click', toggleClean);
+
+  if (cropBox) {
+    cropBox.addEventListener('pointerdown', (e) => {
+      if (e.target.classList.contains('crop-tool-btn') || e.target.closest('#crop-toolbar')) {
+        return;
+      }
+      const handle = e.target.closest('.crop-handle');
+      cropDragMode = handle ? handle.dataset.dir : 'move';
+      cropStartPointer = { x: e.clientX, y: e.clientY };
+      cropStartRect = { ...cropRect };
+      cropBox.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    });
+
+    cropBox.addEventListener('pointermove', (e) => {
+      if (!cropDragMode) return;
+      const vr = getScreenVideoRenderedRect();
+      if (!vr.width || !vr.height) return;
+
+      const dx = (e.clientX - cropStartPointer.x) / vr.width;
+      const dy = (e.clientY - cropStartPointer.y) / vr.height;
+
+      let { x, y, w, h } = cropStartRect;
+
+      if (cropDragMode === 'move') {
+        x = Math.max(0, Math.min(1 - w, x + dx));
+        y = Math.max(0, Math.min(1 - h, y + dy));
+      } else {
+        if (cropDragMode.includes('r')) {
+          w = Math.max(0.05, Math.min(1 - x, cropStartRect.w + dx));
+        }
+        if (cropDragMode.includes('b')) {
+          h = Math.max(0.05, Math.min(1 - y, cropStartRect.h + dy));
+        }
+        if (cropDragMode.includes('l')) {
+          const newX = Math.max(0, Math.min(cropStartRect.x + cropStartRect.w - 0.05, cropStartRect.x + dx));
+          w = cropStartRect.w + (cropStartRect.x - newX);
+          x = newX;
+        }
+        if (cropDragMode.includes('t')) {
+          const newY = Math.max(0, Math.min(cropStartRect.y + cropStartRect.h - 0.05, cropStartRect.y + dy));
+          h = cropStartRect.h + (cropStartRect.y - newY);
+          y = newY;
+        }
+      }
+
+      cropRect = { x, y, w, h };
+      updateCropBoxDOM();
+    });
+
+    cropBox.addEventListener('pointerup', (e) => {
+      if (cropDragMode) {
+        cropDragMode = null;
+        try { cropBox.releasePointerCapture(e.pointerId); } catch (err) {}
+        if (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001) {
+          isCropActive = true;
+          btnDockCrop.classList.add('active');
+        } else {
+          isCropActive = false;
+          btnDockCrop.classList.remove('active');
+        }
+      }
+    });
+
+    cropBox.addEventListener('dblclick', (e) => {
+      if (e.target.closest('#crop-toolbar')) return;
+      cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      isCropActive = false;
+      btnDockCrop.classList.remove('active');
+      updateCropBoxDOM();
+      showToast('已重置为全屏录制');
+    });
+  }
+
+  if (cropPresetFull) {
+    cropPresetFull.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cropRect = { x: 0, y: 0, w: 1, h: 1 };
+      isCropActive = false;
+      btnDockCrop.classList.remove('active');
+      updateCropBoxDOM();
+      showToast('已恢复全屏录制');
+    });
+  }
+
+  if (cropPresetNoTab) {
+    cropPresetNoTab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cropRect = { x: 0, y: 0.08, w: 1, h: 0.92 };
+      isCropActive = true;
+      btnDockCrop.classList.add('active');
+      updateCropBoxDOM();
+      showToast('已自动去除浏览器顶栏 (录制纯网页内容)');
+    });
+  }
+
+  if (cropPreset169) {
+    cropPreset169.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetRatio = 16 / 9;
+      const curRatio = (screenVideo.videoWidth || 16) / (screenVideo.videoHeight || 9);
+      if (curRatio > targetRatio) {
+        const w = targetRatio / curRatio;
+        cropRect = { x: (1 - w) / 2, y: 0, w: w, h: 1 };
+      } else {
+        const h = curRatio / targetRatio;
+        cropRect = { x: 0, y: (1 - h) / 2, w: 1, h: h };
+      }
+      isCropActive = true;
+      btnDockCrop.classList.add('active');
+      updateCropBoxDOM();
+      showToast('已设为 16:9 框选区域');
+    });
+  }
+
+  if (cropBtnDone) {
+    cropBtnDone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isCropEditing = false;
+      cropOverlay.classList.remove('active');
+      if (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001) {
+        isCropActive = true;
+        btnDockCrop.classList.add('active');
+        showToast(`已锁定框选区域 (${Math.round(cropRect.w * 100)}% × ${Math.round(cropRect.h * 100)}%)`);
+      } else {
+        isCropActive = false;
+        btnDockCrop.classList.remove('active');
+        showToast('已设为全屏录制');
+      }
+    });
+  }
+
+  window.addEventListener('resize', () => {
+    if (isCropEditing) updateCropBoxDOM();
+  });
 
   /* =========================================================
      4. 形状、发光、缩放与拖拽
@@ -1375,23 +1806,51 @@
      ========================================================= */
 
   function renderCompositeFrame() {
+    const vr = getScreenVideoRenderedRect();
+    const sr = stage.getBoundingClientRect();
+
     if (screenVideo.style.display !== 'none' && screenVideo.videoWidth) {
-      ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+      if (isCropActive && (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001)) {
+        const sx = cropRect.x * screenVideo.videoWidth;
+        const sy = cropRect.y * screenVideo.videoHeight;
+        const sw = cropRect.w * screenVideo.videoWidth;
+        const sh = cropRect.h * screenVideo.videoHeight;
+        ctx.drawImage(screenVideo, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+      }
     } else {
       ctx.fillStyle = "#181b24";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     if (isCameraActive && camVideo.videoWidth) {
-      const sr = stage.getBoundingClientRect();
       const br = camBubble.getBoundingClientRect();
-      const sx = canvas.width / (sr.width || 1);
-      const sy = canvas.height / (sr.height || 1);
+      const bLeft = br.left - sr.left;
+      const bTop = br.top - sr.top;
 
-      const cx = (br.left - sr.left) * sx;
-      const cy = (br.top - sr.top) * sy;
-      const cw = br.width * sx;
-      const ch = br.height * sy;
+      let cx, cy, cw, ch;
+      if (isCropActive && (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001)) {
+        const cropLeft = vr.left + cropRect.x * vr.width;
+        const cropTop = vr.top + cropRect.y * vr.height;
+        const cropW = cropRect.w * vr.width;
+        const cropH = cropRect.h * vr.height;
+
+        const scaleX = canvas.width / (cropW || 1);
+        const scaleY = canvas.height / (cropH || 1);
+
+        cx = (bLeft - cropLeft) * scaleX;
+        cy = (bTop - cropTop) * scaleY;
+        cw = br.width * scaleX;
+        ch = br.height * scaleY;
+      } else {
+        const sx = canvas.width / (sr.width || 1);
+        const sy = canvas.height / (sr.height || 1);
+        cx = bLeft * sx;
+        cy = bTop * sy;
+        cw = br.width * sx;
+        ch = br.height * sy;
+      }
 
       ctx.save();
       ctx.beginPath();
@@ -1427,6 +1886,7 @@
       // 发光环绘制
       if (borders[currentBorderIdx] !== 'border-glow-none') {
         ctx.save();
+        const sx = canvas.width / (sr.width || 1);
         ctx.lineWidth = 4 * sx;
         ctx.strokeStyle = borders[currentBorderIdx].includes('purple') ? '#a78bfa' : (borders[currentBorderIdx].includes('green') ? '#34d399' : '#38bdf8');
         ctx.beginPath();
@@ -1504,7 +1964,7 @@
     btnRecord.classList.remove('recording');
     btnRecord.classList.remove('pulse-attention');
     dock.classList.remove('recording-active');
-    recordBtnText.innerText = '开始录制';
+    if (recordBtnText) recordBtnText.innerText = '开始录制 (空格)';
     if (recordIconWrapper) {
       recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>';
     }
@@ -1517,6 +1977,10 @@
   }
 
   async function beginRecording() {
+    if (isCropEditing) {
+      isCropEditing = false;
+      if (cropOverlay) cropOverlay.classList.remove('active');
+    }
     recordedChunks = [];
     canvas.width = 1920;
     canvas.height = 1080;
@@ -1644,7 +2108,7 @@
     btnRecord.classList.add('recording');
     btnRecord.classList.remove('pulse-attention');
     dock.classList.add('recording-active');
-    recordBtnText.innerText = '停止录制';
+    if (recordBtnText) recordBtnText.innerText = '停止录制 (空格)';
     if (recordIconWrapper) {
       recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
     }
@@ -1662,7 +2126,7 @@
       if (headerTimer) headerTimer.innerText = `${m}:${s}`;
     }, 1000);
 
-    showToast('🔴 录制已开始 (按 H 隐藏工具栏，按空格键停止)');
+    showToast('🔴 录制已开始 (按 H 隐藏侧边栏，按空格键停止)');
   }
 
   function stopRecording() {
@@ -1747,10 +2211,14 @@
     else if (e.code === 'KeyC') toggleCamera();
     else if (e.code === 'KeyS') applyShape(currentShapeIdx + 1);
     else if (e.code === 'KeyM') btnDockMic.click();
+    else if (e.code === 'KeyR') toggleCropMode();
     else if (e.code === 'Space') {
       e.preventDefault();
       btnRecord.click();
     } else if (e.code === 'Escape') {
+      if (isCropEditing) {
+        toggleCropMode();
+      }
       if (isCountingDown) {
         cancelCountdown();
         showToast('已取消录制倒计时');
