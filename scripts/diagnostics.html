@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📷 摄像头硬件极速诊断器 (Camera Diagnostics)</title>
+  <style>
+    body {
+      background: #090d16;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 640px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 20px; margin-top: 0; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    button {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      margin: 8px 4px;
+      transition: all 0.2s;
+    }
+    button:hover { transform: scale(1.03); }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+    video {
+      width: 100%;
+      height: 320px;
+      border-radius: 12px;
+      background: #000;
+      object-fit: cover;
+      margin-top: 16px;
+      transform: scaleX(-1);
+    }
+    .log-box {
+      background: #020617;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      color: #94a3b8;
+    }
+    .warn-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>📷 摄像头连接极速检测器</h1>
+  <p style="color: #94a3b8; font-size: 14px;">
+    此页面用于直接调用浏览器底层 API 探测摄像头，排查权限与硬件状态。
+  </p>
+
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <button id="btnTestAny">⚡ 一键自动连接最佳摄像头</button>
+    <button class="btn-secondary" id="btnEnum">🔍 刷新设备列表</button>
+  </div>
+
+  <div id="deviceButtons" style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;"></div>
+
+  <video id="v" autoplay playsinline muted></video>
+
+  <div class="warn-box" id="clamshellNotice">
+    ⚠️ <strong>注意：</strong>如果当前 MacBook 为<strong>合盖外接显示器</strong>状态，自带的 FaceTime 摄像头已被系统物理断电休眠！<br>
+    请翻开笔记本盖子，或解锁身边的 iPhone 使用连续互通相机。
+  </div>
+
+  <div class="log-box" id="logs">准备就绪，点击上方按钮开始测试...</div>
+</div>
+
+<script>
+  const logs = document.getElementById('logs');
+  const v = document.getElementById('v');
+  const btnTestAny = document.getElementById('btnTestAny');
+  const btnEnum = document.getElementById('btnEnum');
+  const deviceButtons = document.getElementById('deviceButtons');
+
+  function log(msg, isError = false) {
+    const time = new Date().toLocaleTimeString();
+    const color = isError ? '#f87171' : '#38bdf8';
+    logs.innerHTML += `<div style="color:${color};">[${time}] ${msg}</div>`;
+    logs.scrollTop = logs.scrollHeight;
+  }
+
+  async function listDevices() {
+    deviceButtons.innerHTML = '';
+    log("正在枚举系统设备...");
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      log(`找到 ${videoDevices.length} 个视频设备`);
+      
+      videoDevices.forEach((d, idx) => {
+        const name = d.label || `未命名设备 ${idx + 1} (需授权后可见)`;
+        log(`- [${idx+1}] ${name} (ID: ${d.deviceId.slice(0,8)}...)`);
+        const b = document.createElement('button');
+        b.className = 'btn-secondary';
+        b.style.fontSize = '12px';
+        b.style.padding = '6px 14px';
+        b.innerText = `连接: ${name}`;
+        b.onclick = () => connectCamera(d.deviceId, name);
+        deviceButtons.appendChild(b);
+      });
+      return videoDevices;
+    } catch(err) {
+      log("枚举设备失败: " + err.message, true);
+      return [];
+    }
+  }
+
+  async function connectCamera(deviceId = null, label = '默认') {
+    log(`尝试启动摄像头 [${label}]...`);
+    try {
+      const constraints = deviceId 
+        ? { video: { deviceId: { exact: deviceId } }, audio: false }
+        : { video: true, audio: false };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      v.srcObject = stream;
+      log(`🎉 成功！摄像头 [${label}] 已点亮！`);
+      // Re-enumerate to get real names now that permission is active
+      await listDevices();
+    } catch (err) {
+      log(`❌ 连接失败: ${err.name} - ${err.message}`, true);
+      if (err.name === 'NotFoundError') {
+        log(`💡 提示：设备找不到。若 MacBook 盖子合着，请翻开盖子！`, true);
+      } else if (err.name === 'NotAllowedError') {
+        log(`💡 提示：权限被拒绝。请在浏览器地址栏左侧点击 🔒 允许摄像头。`, true);
+      }
+    }
+  }
+
+  btnTestAny.addEventListener('click', () => connectCamera(null, '自动'));
+  btnEnum.addEventListener('click', listDevices);
+
+  // Initial list
+  listDevices();
+</script>
+</body>
+</html>

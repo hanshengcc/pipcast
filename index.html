@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PipCast — 自由形状悬浮镜头 & 零安装轻量录屏工具</title>
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --accent-green: #10b981;
+      --accent-red: #f43f5e;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* 1. Header Navigation */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      background: rgba(10, 15, 29, 0.75);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--card-border);
+      z-index: 100;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #fff;
+      font-size: 16px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border-radius: 999px;
+      font-weight: 700;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 2. Workspace / Stage */
+    #stage-container {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at center, #10172a 0%, #060911 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #screen-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    /* Welcome Hero when no screen selected */
+    #welcome-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 720px;
+      z-index: 10;
+    }
+
+    .hero-badge {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      margin-bottom: 20px;
+    }
+
+    .hero-h1 {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .hero-h1 span {
+      background: linear-gradient(135deg, var(--accent), #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      max-width: 580px;
+    }
+
+    .hero-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+      margin-bottom: 32px;
+    }
+
+    .hero-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hero-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-card-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .hero-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .hero-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* 3. Floating Camera Bubble */
+    #cam-bubble {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      width: 180px;
+      height: 180px;
+      cursor: grab;
+      z-index: 50;
+      transition: box-shadow 0.2s, outline 0.2s;
+      touch-action: none;
+    }
+
+    #cam-bubble:active {
+      cursor: grabbing;
+    }
+
+    .cam-inner-wrapper {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background: #020617;
+      transition: clip-path 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.3s;
+    }
+
+    #cam-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: none;
+    }
+
+    /* Camera Shapes */
+    .shape-circle { border-radius: 50%; }
+    .shape-squircle { border-radius: 28%; }
+    .shape-rounded { border-radius: 18px; }
+    .shape-hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+    .shape-oval { border-radius: 40% / 60%; }
+
+    /* Border Glows */
+    .border-glow-blue {
+      box-shadow: 0 0 0 3px var(--accent), 0 10px 30px rgba(56, 189, 248, 0.35);
+    }
+    .border-glow-purple {
+      box-shadow: 0 0 0 3px var(--accent-purple), 0 10px 30px rgba(168, 85, 247, 0.35);
+    }
+    .border-glow-green {
+      box-shadow: 0 0 0 3px var(--accent-green), 0 10px 30px rgba(16, 185, 129, 0.35);
+    }
+    .border-glow-none {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Bubble Quick Hover Toolbar */
+    .cam-hover-tools {
+      position: absolute;
+      top: -46px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 4px 8px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      z-index: 60;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    #cam-bubble:hover .cam-hover-tools {
+      display: flex;
+    }
+
+    .cam-tool-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cam-tool-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Camera Placeholder (when camera off or waiting) */
+    .cam-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1e293b, #090d16);
+      color: var(--text-muted);
+      text-align: center;
+      padding: 16px;
+      z-index: 5;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .cam-placeholder:hover {
+      background: radial-gradient(circle at center, #27354f, #0c121e);
+    }
+
+    .placeholder-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .placeholder-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+
+    .placeholder-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* 4. Floating Master Control Dock (Bottom) */
+    #dock {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      z-index: 90;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    #dock.hidden-ui {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(30px);
+    }
+
+    .dock-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Buttons */
+    button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-record {
+      background: linear-gradient(135deg, var(--accent-red), #e11d48);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(244, 63, 94, 0.4);
+      font-size: 14px;
+      padding: 9px 20px;
+    }
+    .btn-record.recording {
+      animation: pulse-red 1.5s infinite;
+    }
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+      70% { box-shadow: 0 0 0 12px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn-ghost.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    /* Audio Meter Component */
+    .audio-meter-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .audio-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+      width: 24px;
+    }
+
+    .audio-bar-col {
+      width: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      height: 20%;
+      transition: height 0.08s ease;
+    }
+
+    .audio-bar-col.active {
+      background: var(--accent-green);
+    }
+
+    /* Timer Display */
+    .rec-timer {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      display: none;
+    }
+    .rec-dot.active {
+      display: inline-block;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* 5. Giant Countdown Overlay (3... 2... 1...) */
+    #countdown-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 10, 18, 0.85);
+      backdrop-filter: blur(20px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+
+    .countdown-number {
+      font-size: 130px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1;
+      animation: count-pop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    @keyframes count-pop {
+      0% { transform: scale(0.4); opacity: 0; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .countdown-hint {
+      margin-top: 24px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* 6. Modals (Preview & Diagnostics) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+    }
+
+    .modal-content {
+      background: #0d1322;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      width: 90vw;
+      max-width: 840px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .video-preview {
+      width: 100%;
+      max-height: 480px;
+      border-radius: 12px;
+      background: #000;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Diag Item Cards */
+    .diag-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .diag-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 13px;
+    }
+    .diag-item:last-child { border-bottom: none; }
+
+    .diag-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .badge-ok { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge-err { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .code-inline {
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Toast Notifications */
+    #toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50px);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 400;
+      pointer-events: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Hidden Canvas for Mixing Recording */
+    #composite-canvas { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- 1. Header -->
+<header id="main-header">
+  <div class="brand">
+    <div class="logo-icon">P</div>
+    <span class="brand-title">PipCast</span>
+    <span class="brand-tag">v1.0 Local Studio</span>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn-ghost" id="btnHelpDiag">
+      🔍 硬件诊断 & 排查
+    </button>
+    <button class="btn-ghost" id="btnCleanMode" title="快捷键: H">
+      👁️ 沉浸模式 (H)
+    </button>
+    <a href="https://github.com/ThisMac/pipcast" target="_blank" style="text-decoration: none;">
+      <button class="btn-ghost">⭐ GitHub</button>
+    </a>
+  </div>
+</header>
+
+<!-- 2. Workspace Stage -->
+<main id="stage-container">
+  <!-- Screen Video Layer -->
+  <video id="screen-video" autoplay playsinline muted></video>
+
+  <!-- Welcome Hero (Shown when no screen is selected) -->
+  <div id="welcome-hero">
+    <div class="hero-badge">零安装 · 100% 离线隐私 · 开源 Loom 替代</div>
+    <h1 class="hero-h1">自由悬浮人像，<span>随心所欲录制。</span></h1>
+    <p class="hero-desc">
+      无需安装多 GB 的重型软件，无需付费订阅。在浏览器中一键录制高清屏幕、自由切换多边形镜头气泡，并实时混音录制你的麦克风原声。
+    </p>
+
+    <!-- Quick Mode Selector Cards -->
+    <div class="hero-cards-grid">
+      <div class="hero-card" id="cardScreenAndCam">
+        <div class="hero-card-icon">🖥️ + 📷</div>
+        <div class="hero-card-title">屏幕 + 镜头气泡</div>
+        <div class="hero-card-desc">录制演讲幻灯片、代码走查或软件演示，附带自由移动的人像气泡。</div>
+      </div>
+
+      <div class="hero-card" id="cardCamOnly">
+        <div class="hero-card-icon">📹</div>
+        <div class="hero-card-title">纯镜头备忘录</div>
+        <div class="hero-card-desc">无需共享屏幕，直接出镜录制视频随笔、个人陈述或自我介绍。</div>
+      </div>
+
+      <div class="hero-card" id="cardScreenOnly">
+        <div class="hero-card-icon">💻</div>
+        <div class="hero-card-title">纯屏幕录制</div>
+        <div class="hero-card-desc">纯净捕获应用窗口、浏览器标签或全屏幕，配合麦克风画外音。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Floating Camera Bubble -->
+  <div id="cam-bubble" class="border-glow-blue">
+    <!-- Hover Quick Tools Pill -->
+    <div class="cam-hover-tools">
+      <button class="cam-tool-btn" id="btnCycleShape" title="切换形状 (快捷键: S)">🔮 形状</button>
+      <button class="cam-tool-btn" id="btnToggleMirror" title="水平镜像翻转">🪞 镜像</button>
+      <button class="cam-tool-btn" id="btnSwitchCamQuick" title="切换前后置或 iPhone 相机">🔄 切镜头</button>
+      <button class="cam-tool-btn" id="btnCycleBorder" title="切换发光边框">✨ 边框</button>
+    </div>
+
+    <!-- Inner Mask Wrapper -->
+    <div class="cam-inner-wrapper shape-circle" id="cam-wrapper">
+      <video id="cam-video" autoplay playsinline muted></video>
+      
+      <!-- Placeholder when off -->
+      <div class="cam-placeholder" id="cam-placeholder">
+        <div class="placeholder-icon">📷</div>
+        <div class="placeholder-title" id="placeholder-title">点击开启摄像头</div>
+        <div class="placeholder-hint" id="placeholder-hint">支持 Mac 自带 / iPhone 连续互通</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Master Control Dock (Bottom Center) -->
+  <div id="dock">
+    <!-- Screen & Mode Group -->
+    <div class="dock-group">
+      <button class="btn-ghost" id="btnSelectScreen">
+        🖥️ <span>选择屏幕</span>
+      </button>
+      <button class="btn-ghost" id="btnToggleCam">
+        📷 <span>镜头: 关</span>
+      </button>
+      <button class="btn-ghost" id="btnSwitchDevice" style="display: none;">
+        🔄 <span>换镜头</span>
+      </button>
+    </div>
+
+    <div class="dock-divider"></div>
+
+    <!-- Shape & Style Group -->
+    <div class="dock-group">
+      <button class="btn-ghost" id="btnShapeSelector">
+        🔮 形状: 圆形
+      </button>
+      <button class="btn-ghost" id="btnCamSize">
+        📐 大小: 180px
+      </button>
+    </div>
+
+    <div class="dock-divider"></div>
+
+    <!-- Audio Meter & Mic -->
+    <div class="dock-group">
+      <button class="btn-ghost" id="btnToggleMic">
+        🎙️ <span>麦克风: 开</span>
+      </button>
+      <div class="audio-meter-box" title="实时麦克风收音电平">
+        <div class="audio-bars">
+          <div class="audio-bar-col" id="ab1"></div>
+          <div class="audio-bar-col" id="ab2"></div>
+          <div class="audio-bar-col" id="ab3"></div>
+          <div class="audio-bar-col" id="ab4"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock-divider"></div>
+
+    <!-- Record Trigger & Timer -->
+    <div class="dock-group">
+      <div class="rec-timer">
+        <span class="rec-dot" id="rec-dot"></span>
+        <span id="timer-display">00:00</span>
+      </div>
+      <button class="btn-record" id="btnRecord">
+        🔴 <span>开始录制</span>
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- 5. Countdown Overlay -->
+<div id="countdown-overlay">
+  <div class="countdown-number" id="countdown-number">3</div>
+  <div class="countdown-hint">深呼吸，即将开始录制... <button class="btn-ghost" id="btnSkipCountdown" style="margin-left: 8px;">跳过倒计时</button></div>
+</div>
+
+<!-- 6. Preview Modal -->
+<div class="modal-backdrop" id="preview-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">🎉 录制完成！预览与下载</div>
+      <button class="btn-ghost" id="btnCloseModal">✕</button>
+    </div>
+    <video class="video-preview" id="modal-video-player" controls autoplay></video>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 13px; color: var(--text-muted);" id="rec-meta-info">
+        格式: WebM/MP4 (60 FPS) · 100% 本地生成无上传
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="btnDiscard">🗑️ 放弃重新录</button>
+        <button class="btn-primary" id="btnDownload">⬇️ 下载高清视频文件</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Diagnostics & Help Modal -->
+<div class="modal-backdrop" id="diag-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">🔍 摄像头与屏幕硬件诊断助手</div>
+      <button class="btn-ghost" id="btnCloseDiag">✕</button>
+    </div>
+    
+    <div id="diag-body">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="btnDiagRescan">🔄 重新扫描硬件</button>
+      <button class="btn-primary" id="btnCloseDiagDone">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden Canvas for Mixing -->
+<canvas id="composite-canvas"></canvas>
+
+<!-- Toast -->
+<div id="toast">提示信息</div>
+
+<script>
+  /* =========================================================
+     PipCast Studio Core Engine
+     Architecture:
+     1. State Management
+     2. Camera Controller (Resilient & Apple Continuity Aware)
+     3. Screen Capture Controller (Non-blocking & Safe)
+     4. Web Audio Mixer & Realtime Level Visualizer
+     5. 60 FPS HTML5 Canvas Compositing Engine
+     6. MediaRecorder Pipeline
+     ========================================================= */
+
+  // State
+  let screenStream = null;
+  let camStream = null;
+  let micStream = null;
+  let audioContext = null;
+  let analyserNode = null;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordedBlob = null;
+  
+  let isCameraActive = false;
+  let isMicActive = true;
+  let isRecording = false;
+  let isCleanMode = false;
+  let isMirrored = true;
+  let isCameraOnlyMode = false;
+  let isSelectingScreen = false;
+  let lastCameraError = null;
+
+  let recordSeconds = 0;
+  let recordTimerInterval = null;
+  let countdownTimerInterval = null;
+
+  // Shapes & Visuals
+  const shapes = ['shape-circle', 'shape-squircle', 'shape-rounded', 'shape-hexagon', 'shape-oval'];
+  const shapeNames = ['圆形', '超椭圆', '微圆角', '六边形', '椭圆'];
+  let currentShapeIdx = 0;
+
+  const borders = ['border-glow-blue', 'border-glow-purple', 'border-glow-green', 'border-glow-none'];
+  let currentBorderIdx = 0;
+
+  const sizes = [120, 180, 240, 320];
+  let currentSizeIdx = 1; // 180px default
+
+  // Available video input devices
+  let availableCameras = [];
+  let currentCameraIndex = 0;
+
+  // DOM Elements
+  const stage = document.getElementById('stage-container');
+  const screenVideo = document.getElementById('screen-video');
+  const welcomeHero = document.getElementById('welcome-hero');
+  const camBubble = document.getElementById('cam-bubble');
+  const camWrapper = document.getElementById('cam-wrapper');
+  const camVideo = document.getElementById('cam-video');
+  const camPlaceholder = document.getElementById('cam-placeholder');
+  const placeholderTitle = document.getElementById('placeholder-title');
+  const placeholderHint = document.getElementById('placeholder-hint');
+
+  const mainHeader = document.getElementById('main-header');
+  const dock = document.getElementById('dock');
+  const btnSelectScreen = document.getElementById('btnSelectScreen');
+  const btnToggleCam = document.getElementById('btnToggleCam');
+  const btnSwitchDevice = document.getElementById('btnSwitchDevice');
+  const btnShapeSelector = document.getElementById('btnShapeSelector');
+  const btnCamSize = document.getElementById('btnCamSize');
+  const btnToggleMic = document.getElementById('btnToggleMic');
+  const btnRecord = document.getElementById('btnRecord');
+  const recDot = document.getElementById('rec-dot');
+  const timerDisplay = document.getElementById('timer-display');
+
+  const btnCycleShape = document.getElementById('btnCycleShape');
+  const btnToggleMirror = document.getElementById('btnToggleMirror');
+  const btnSwitchCamQuick = document.getElementById('btnSwitchCamQuick');
+  const btnCycleBorder = document.getElementById('btnCycleBorder');
+
+  const btnCleanMode = document.getElementById('btnCleanMode');
+  const btnHelpDiag = document.getElementById('btnHelpDiag');
+
+  const cardScreenAndCam = document.getElementById('cardScreenAndCam');
+  const cardCamOnly = document.getElementById('cardCamOnly');
+  const cardScreenOnly = document.getElementById('cardScreenOnly');
+
+  const countdownOverlay = document.getElementById('countdown-overlay');
+  const countdownNumber = document.getElementById('countdown-number');
+  const btnSkipCountdown = document.getElementById('btnSkipCountdown');
+
+  const previewModal = document.getElementById('preview-modal');
+  const modalVideoPlayer = document.getElementById('modal-video-player');
+  const btnCloseModal = document.getElementById('btnCloseModal');
+  const btnDownload = document.getElementById('btnDownload');
+  const btnDiscard = document.getElementById('btnDiscard');
+  const recMetaInfo = document.getElementById('rec-meta-info');
+
+  const diagModal = document.getElementById('diag-modal');
+  const diagBody = document.getElementById('diag-body');
+  const btnCloseDiag = document.getElementById('btnCloseDiag');
+  const btnCloseDiagDone = document.getElementById('btnCloseDiagDone');
+  const btnDiagRescan = document.getElementById('btnDiagRescan');
+
+  const toast = document.getElementById('toast');
+  const canvas = document.getElementById('composite-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const ab1 = document.getElementById('ab1');
+  const ab2 = document.getElementById('ab2');
+  const ab3 = document.getElementById('ab3');
+  const ab4 = document.getElementById('ab4');
+
+  function showToast(msg) {
+    toast.innerText = msg;
+    toast.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  /* =========================================================
+     1. CAMERA CONTROLLER
+     ========================================================= */
+
+  async function updateCameraList() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      availableCameras = devices.filter(d => d.kind === 'videoinput');
+      if (availableCameras.length > 1) {
+        btnSwitchDevice.style.display = 'inline-flex';
+      } else {
+        btnSwitchDevice.style.display = 'none';
+      }
+      return availableCameras;
+    } catch (e) {
+      console.warn('Could not enumerate cameras:', e);
+      return [];
+    }
+  }
+
+  async function initCamera(preferredDeviceId = null) {
+    placeholderTitle.innerText = '正在唤醒摄像头...';
+    placeholderHint.innerText = '连接硬件中';
+
+    // Stop existing camera stream
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+
+    const attempts = [];
+    if (preferredDeviceId) {
+      attempts.push({ video: { deviceId: { exact: preferredDeviceId } }, audio: false });
+    }
+    // Standard friendly resolution constraints
+    attempts.push({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
+    attempts.push({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    attempts.push({ video: true, audio: false });
+
+    let stream = null;
+    let caughtErr = null;
+
+    for (const constraint of attempts) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraint);
+        if (stream) break;
+      } catch (err) {
+        caughtErr = err;
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') break;
+      }
+    }
+
+    if (stream) {
+      camStream = stream;
+      camVideo.srcObject = camStream;
+      camVideo.style.display = 'block';
+      camPlaceholder.style.display = 'none';
+      isCameraActive = true;
+      lastCameraError = null;
+
+      btnToggleCam.innerHTML = '📷 <span>镜头: 开</span>';
+      btnToggleCam.classList.add('active');
+      showToast('摄像头已就绪！');
+      await updateCameraList();
+    } else {
+      handleCameraError(caughtErr);
+    }
+  }
+
+  function handleCameraError(err) {
+    lastCameraError = err;
+    isCameraActive = false;
+    camStream = null;
+    camVideo.srcObject = null;
+    camVideo.style.display = 'none';
+    camPlaceholder.style.display = 'flex';
+
+    btnToggleCam.innerHTML = '📷 <span>镜头: 关</span>';
+    btnToggleCam.classList.remove('active');
+
+    if (err) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        placeholderTitle.innerText = '权限未开启';
+        placeholderHint.innerText = '请在浏览器地址栏 🔒 允许摄像头';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        placeholderTitle.innerText = '设备被占用';
+        placeholderHint.innerText = '请彻底退出 QuickTime 等应用';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        placeholderTitle.innerText = '未找到摄像头';
+        placeholderHint.innerText = 'MacBook 合盖中？掀开屏幕即可唤醒';
+      } else {
+        placeholderTitle.innerText = '摄像头未连接';
+        placeholderHint.innerText = '点击查看排查助手';
+      }
+      showToast('未开启摄像头：' + placeholderTitle.innerText);
+    } else {
+      placeholderTitle.innerText = '点击开启摄像头';
+      placeholderHint.innerText = '支持 Mac 自带 / iPhone 连续互通';
+    }
+  }
+
+  function toggleCamera() {
+    if (isCameraActive) {
+      if (camStream) {
+        camStream.getTracks().forEach(t => t.stop());
+        camStream = null;
+      }
+      camVideo.srcObject = null;
+      camVideo.style.display = 'none';
+      camPlaceholder.style.display = 'flex';
+      placeholderTitle.innerText = '点击开启摄像头';
+      placeholderHint.innerText = '支持 Mac 自带 / iPhone 连续互通';
+      isCameraActive = false;
+      btnToggleCam.innerHTML = '📷 <span>镜头: 关</span>';
+      btnToggleCam.classList.remove('active');
+    } else {
+      initCamera();
+    }
+  }
+
+  async function switchCamera() {
+    await updateCameraList();
+    if (availableCameras.length <= 1) {
+      showToast('当前仅检测到 1 个摄像头');
+      return;
+    }
+    currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+    const nextCam = availableCameras[currentCameraIndex];
+    showToast(`正在切换至: ${nextCam.label || '摄像头 ' + (currentCameraIndex + 1)}`);
+    initCamera(nextCam.deviceId);
+  }
+
+  btnToggleCam.addEventListener('click', toggleCamera);
+  camPlaceholder.addEventListener('click', () => initCamera());
+  btnSwitchDevice.addEventListener('click', switchCamera);
+  btnSwitchCamQuick.addEventListener('click', (e) => {
+    e.stopPropagation();
+    switchCamera();
+  });
+
+  /* =========================================================
+     2. SCREEN CAPTURE CONTROLLER (Non-blocking)
+     ========================================================= */
+
+  async function selectScreen() {
+    if (isSelectingScreen) return;
+    isSelectingScreen = true;
+
+    try {
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 60 } },
+        audio: true
+      });
+
+      screenVideo.srcObject = screenStream;
+      screenVideo.style.display = 'block';
+      welcomeHero.style.display = 'none';
+      isCameraOnlyMode = false;
+
+      // Handle user stopping stream from browser UI
+      screenStream.getVideoTracks()[0].onended = () => {
+        screenVideo.style.display = 'none';
+        screenStream = null;
+        if (!isCameraActive) {
+          welcomeHero.style.display = 'flex';
+        }
+        if (isRecording) stopRecording();
+      };
+
+      showToast('屏幕共享已连接！');
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        showToast('取消了屏幕选择');
+      } else {
+        console.warn('Screen selection failed:', e);
+      }
+    } finally {
+      isSelectingScreen = false;
+    }
+  }
+
+  btnSelectScreen.addEventListener('click', selectScreen);
+
+  // Hero Card Shortcuts
+  cardScreenAndCam.addEventListener('click', async () => {
+    if (!isCameraActive) initCamera();
+    await selectScreen();
+  });
+
+  cardCamOnly.addEventListener('click', () => {
+    welcomeHero.style.display = 'none';
+    isCameraOnlyMode = true;
+    if (!isCameraActive) initCamera();
+    showToast('已切换为纯镜头出镜模式');
+  });
+
+  cardScreenOnly.addEventListener('click', async () => {
+    if (isCameraActive) toggleCamera();
+    await selectScreen();
+  });
+
+  /* =========================================================
+     3. AUDIO MIXER & LIVE LEVEL METER
+     ========================================================= */
+
+  async function setupAudioEngine() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioCtx();
+    }
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+    }
+
+    if (isMicActive && (!micStream || !micStream.active)) {
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.warn('Microphone permission denied or missing:', err);
+        showToast('麦克风未开启，仅录制画面与系统声音');
+        isMicActive = false;
+        btnToggleMic.innerHTML = '🎙️ <span>麦克风: 关</span>';
+        btnToggleMic.classList.remove('active');
+        return;
+      }
+    }
+
+    if (micStream && micStream.getAudioTracks().length > 0) {
+      try {
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 64;
+        source.connect(analyserNode);
+        startAudioMeterLoop();
+      } catch (e) {
+        console.warn('Analyser attach error:', e);
+      }
+    }
+  }
+
+  function startAudioMeterLoop() {
+    if (!analyserNode) return;
+    const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+    function update() {
+      if (!isMicActive || !micStream || !micStream.active) {
+        [ab1, ab2, ab3, ab4].forEach(b => {
+          b.style.height = '20%';
+          b.classList.remove('active');
+        });
+        return;
+      }
+
+      analyserNode.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      const avg = sum / dataArray.length; // 0 to 255
+      const level = Math.min(100, Math.max(15, (avg / 128) * 100));
+
+      ab1.style.height = `${Math.min(100, level * 0.6)}%`;
+      ab2.style.height = `${Math.min(100, level * 0.9)}%`;
+      ab3.style.height = `${Math.min(100, level * 1.1)}%`;
+      ab4.style.height = `${Math.min(100, level * 0.8)}%`;
+
+      const isActive = avg > 8;
+      [ab1, ab2, ab3, ab4].forEach(b => b.classList.toggle('active', isActive));
+
+      requestAnimationFrame(update);
+    }
+    update();
+  }
+
+  btnToggleMic.addEventListener('click', async () => {
+    isMicActive = !isMicActive;
+    if (isMicActive) {
+      btnToggleMic.innerHTML = '🎙️ <span>麦克风: 开</span>';
+      btnToggleMic.classList.add('active');
+      await setupAudioEngine();
+      showToast('麦克风收音已开启');
+    } else {
+      btnToggleMic.innerHTML = '🎙️ <span>麦克风: 关</span>';
+      btnToggleMic.classList.remove('active');
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+      }
+      showToast('麦克风已静音');
+    }
+  });
+
+  // Pre-probe mic gently on first click
+  document.addEventListener('click', () => {
+    if (!audioContext && isMicActive) setupAudioEngine();
+  }, { once: true });
+
+  /* =========================================================
+     4. SHAPES, SIZING & DRAG CONTROLS
+     ========================================================= */
+
+  function applyShape(idx) {
+    currentShapeIdx = idx % shapes.length;
+    shapes.forEach(s => camWrapper.classList.remove(s));
+    camWrapper.classList.add(shapes[currentShapeIdx]);
+    btnShapeSelector.innerText = `🔮 形状: ${shapeNames[currentShapeIdx]}`;
+  }
+
+  btnCycleShape.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyShape(currentShapeIdx + 1);
+  });
+  btnShapeSelector.addEventListener('click', () => applyShape(currentShapeIdx + 1));
+
+  btnCycleBorder.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentBorderIdx = (currentBorderIdx + 1) % borders.length;
+    borders.forEach(b => camBubble.classList.remove(b));
+    camBubble.classList.add(borders[currentBorderIdx]);
+  });
+
+  btnToggleMirror.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isMirrored = !isMirrored;
+    camVideo.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    showToast(isMirrored ? '已开启镜像' : '已关闭镜像');
+  });
+
+  btnCamSize.addEventListener('click', () => {
+    currentSizeIdx = (currentSizeIdx + 1) % sizes.length;
+    const newSize = sizes[currentSizeIdx];
+    camBubble.style.width = `${newSize}px`;
+    camBubble.style.height = `${newSize}px`;
+    btnCamSize.innerText = `📐 大小: ${newSize}px`;
+  });
+
+  // Fluid Mouse Wheel Resize
+  camBubble.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    let currentWidth = camBubble.offsetWidth;
+    currentWidth = e.deltaY < 0 ? Math.min(currentWidth + 16, 360) : Math.max(currentWidth - 16, 100);
+    camBubble.style.width = `${currentWidth}px`;
+    camBubble.style.height = `${currentWidth}px`;
+    btnCamSize.innerText = `📐 大小: ${currentWidth}px`;
+  });
+
+  // Draggable Bubble with boundary limits
+  let isDragging = false;
+  let dragStartX, dragStartY, initialLeft, initialTop;
+
+  camBubble.addEventListener('pointerdown', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    const rect = camBubble.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    initialLeft = rect.left - stageRect.left;
+    initialTop = rect.top - stageRect.top;
+
+    camBubble.style.bottom = 'auto';
+    camBubble.style.right = 'auto';
+    camBubble.style.left = `${initialLeft}px`;
+    camBubble.style.top = `${initialTop}px`;
+    camBubble.setPointerCapture(e.pointerId);
+  });
+
+  camBubble.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    const stageRect = stage.getBoundingClientRect();
+    const bubbleW = camBubble.offsetWidth;
+    const bubbleH = camBubble.offsetHeight;
+
+    let newLeft = Math.max(10, Math.min(initialLeft + dx, stageRect.width - bubbleW - 10));
+    let newTop = Math.max(10, Math.min(initialTop + dy, stageRect.height - bubbleH - 10));
+
+    camBubble.style.left = `${newLeft}px`;
+    camBubble.style.top = `${newTop}px`;
+  });
+
+  camBubble.addEventListener('pointerup', (e) => {
+    isDragging = false;
+    camBubble.releasePointerCapture(e.pointerId);
+  });
+
+  /* =========================================================
+     5. CLEAN MODE (H KEY)
+     ========================================================= */
+
+  function toggleCleanMode() {
+    isCleanMode = !isCleanMode;
+    dock.classList.toggle('hidden-ui', isCleanMode);
+    mainHeader.style.display = isCleanMode ? 'none' : 'flex';
+    showToast(isCleanMode ? '沉浸模式已开启 (按 H 键恢复控制栏)' : '控制栏已恢复');
+  }
+
+  btnCleanMode.addEventListener('click', toggleCleanMode);
+
+  /* =========================================================
+     6. 60 FPS CANVAS COMPOSITING & RECORDING ENGINE
+     ========================================================= */
+
+  function drawCompositeFrame() {
+    if (!isRecording) return;
+
+    // A. Draw Screen background (or elegant dark studio background)
+    if (screenVideo.style.display !== 'none' && screenVideo.videoWidth) {
+      ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = "#070a12";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // B. Draw Floating Facecam Bubble if active
+    if (isCameraActive && camVideo.videoWidth) {
+      const stageRect = stage.getBoundingClientRect();
+      const bubbleRect = camBubble.getBoundingClientRect();
+
+      const scaleX = canvas.width / stageRect.width;
+      const scaleY = canvas.height / stageRect.height;
+
+      const camX = (bubbleRect.left - stageRect.left) * scaleX;
+      const camY = (bubbleRect.top - stageRect.top) * scaleY;
+      const camW = bubbleRect.width * scaleX;
+      const camH = bubbleRect.height * scaleY;
+
+      ctx.save();
+      ctx.beginPath();
+
+      // Shape clipping
+      const currentShape = shapes[currentShapeIdx];
+      if (currentShape === 'shape-circle') {
+        ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
+      } else if (currentShape === 'shape-squircle' || currentShape === 'shape-rounded') {
+        const radius = currentShape === 'shape-squircle' ? camW * 0.28 : camW * 0.12;
+        ctx.roundRect(camX, camY, camW, camH, radius);
+      } else if (currentShape === 'shape-hexagon') {
+        ctx.moveTo(camX + camW * 0.25, camY);
+        ctx.lineTo(camX + camW * 0.75, camY);
+        ctx.lineTo(camX + camW, camY + camH * 0.5);
+        ctx.lineTo(camX + camW * 0.75, camY + camH);
+        ctx.lineTo(camX + camW * 0.25, camY + camH);
+        ctx.lineTo(camX, camY + camH * 0.5);
+        ctx.closePath();
+      } else {
+        ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
+      }
+      ctx.clip();
+
+      // Draw camera frame with mirror transform if enabled
+      if (isMirrored) {
+        ctx.translate(camX + camW, camY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(camVideo, 0, 0, camW, camH);
+      } else {
+        ctx.drawImage(camVideo, camX, camY, camW, camH);
+      }
+      ctx.restore();
+
+      // Draw subtle glow ring on canvas
+      if (borders[currentBorderIdx] !== 'border-glow-none') {
+        ctx.save();
+        ctx.lineWidth = 4 * scaleX;
+        ctx.strokeStyle = borders[currentBorderIdx].includes('purple') ? '#a855f7' : (borders[currentBorderIdx].includes('green') ? '#10b981' : '#38bdf8');
+        ctx.beginPath();
+        if (currentShape === 'shape-circle') {
+          ctx.arc(camX + camW / 2, camY + camH / 2, camW / 2, 0, Math.PI * 2);
+        } else if (currentShape === 'shape-squircle' || currentShape === 'shape-rounded') {
+          const radius = currentShape === 'shape-squircle' ? camW * 0.28 : camW * 0.12;
+          ctx.roundRect(camX, camY, camW, camH, radius);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    requestAnimationFrame(drawCompositeFrame);
+  }
+
+  function startCountdownThenRecord() {
+    let count = 3;
+    countdownNumber.innerText = count;
+    countdownOverlay.style.display = 'flex';
+
+    function completeCountdown() {
+      clearInterval(countdownTimerInterval);
+      countdownOverlay.style.display = 'none';
+      executeRecordStart();
+    }
+
+    btnSkipCountdown.onclick = completeCountdown;
+
+    countdownTimerInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        countdownNumber.innerText = count;
+        countdownNumber.style.animation = 'none';
+        void countdownNumber.offsetWidth; // trigger reflow
+        countdownNumber.style.animation = 'count-pop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      } else {
+        completeCountdown();
+      }
+    }, 900);
+  }
+
+  async function executeRecordStart() {
+    recordedChunks = [];
+    canvas.width = 1920;
+    canvas.height = 1080;
+
+    // Set up Web Audio destination
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!audioContext) audioContext = new AudioCtx();
+    if (audioContext.state === 'suspended') await audioContext.resume();
+
+    const audioDestination = audioContext.createMediaStreamDestination();
+
+    // 1. Connect Screen Audio (System/Tab audio)
+    if (screenStream && screenStream.getAudioTracks().length > 0) {
+      try {
+        const screenAudio = audioContext.createMediaStreamSource(screenStream);
+        screenAudio.connect(audioDestination);
+      } catch (e) {
+        console.warn('Could not pipe screen audio:', e);
+      }
+    }
+
+    // 2. Connect Mic Audio
+    if (isMicActive && (!micStream || !micStream.active)) {
+      await setupAudioEngine();
+    }
+    if (isMicActive && micStream && micStream.getAudioTracks().length > 0) {
+      try {
+        const micAudio = audioContext.createMediaStreamSource(micStream);
+        micAudio.connect(audioDestination);
+      } catch (e) {
+        console.warn('Could not pipe mic audio:', e);
+      }
+    }
+
+    // 3. Composite 60 FPS Video Stream + Audio Stream
+    const canvasStream = canvas.captureStream(60);
+    audioDestination.stream.getAudioTracks().forEach(t => canvasStream.addTrack(t));
+
+    // Codec determination
+    let mimeType = 'video/webm;codecs=vp9,opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+    }
+
+    try {
+      mediaRecorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 8000000 });
+    } catch (e) {
+      mediaRecorder = new MediaRecorder(canvasStream);
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+      const videoURL = URL.createObjectURL(recordedBlob);
+      modalVideoPlayer.src = videoURL;
+      
+      const sizeMB = (recordedBlob.size / (1024 * 1024)).toFixed(2);
+      recMetaInfo.innerText = `大小: ${sizeMB} MB · 时长: ${timerDisplay.innerText} · 格式: ${mediaRecorder.mimeType} (60 FPS)`;
+
+      previewModal.style.display = 'flex';
+      btnRecord.innerHTML = '🔴 <span>开始录制</span>';
+      btnRecord.classList.remove('recording');
+      recDot.classList.remove('active');
+      clearInterval(recordTimerInterval);
+    };
+
+    mediaRecorder.start(200);
+    isRecording = true;
+    drawCompositeFrame();
+
+    btnRecord.innerHTML = '⏹ <span>停止录制</span>';
+    btnRecord.classList.add('recording');
+    recDot.classList.add('active');
+    recordSeconds = 0;
+    timerDisplay.innerText = '00:00';
+
+    recordTimerInterval = setInterval(() => {
+      recordSeconds++;
+      const mins = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
+      const secs = (recordSeconds % 60).toString().padStart(2, '0');
+      timerDisplay.innerText = `${mins}:${secs}`;
+    }, 1000);
+
+    showToast('🔴 录制已启动！按 H 可隐藏控制栏');
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      isRecording = false;
+    }
+  }
+
+  btnRecord.addEventListener('click', async () => {
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+
+    // If neither screen nor camera selected, prompt user cleanly
+    if (!screenStream && !isCameraActive && !isCameraOnlyMode) {
+      showToast('请先选择录制模式（屏幕共享或出镜拍摄）');
+      welcomeHero.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    startCountdownThenRecord();
+  });
+
+  /* =========================================================
+     7. EXPORT & DOWNLOAD
+     ========================================================= */
+
+  btnDownload.addEventListener('click', () => {
+    if (!recordedBlob) return;
+    const a = document.createElement('a');
+    a.href = modalVideoPlayer.src;
+    const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    a.download = `PipCast_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${ext}`;
+    a.click();
+    showToast('视频已保存至本地！');
+  });
+
+  btnCloseModal.addEventListener('click', () => {
+    previewModal.style.display = 'none';
+    modalVideoPlayer.pause();
+  });
+
+  btnDiscard.addEventListener('click', () => {
+    if (confirm('确认放弃本段录屏并重新录制？')) {
+      previewModal.style.display = 'none';
+      modalVideoPlayer.pause();
+      recordedBlob = null;
+      showToast('已放弃上一段录制');
+    }
+  });
+
+  /* =========================================================
+     8. DIAGNOSTICS & TROUBLESHOOTING MODAL
+     ========================================================= */
+
+  async function showDiagnostics() {
+    await updateCameraList();
+    const isFile = window.location.protocol === 'file:';
+    const isSecure = window.isSecureContext;
+    const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    let html = '';
+
+    // Hardware Alert Banner
+    if (lastCameraError) {
+      if (lastCameraError.name === 'NotReadableError' || lastCameraError.name === 'TrackStartError') {
+        html += `
+          <div class="diag-card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08);">
+            <div style="font-weight: 700; color: #f87171; margin-bottom: 6px;">⚠️ 摄像头被其他软件独占 (NotReadableError)</div>
+            <div style="font-size: 13px; line-height: 1.6; color: #cbd5e1;">
+              macOS 系统规定摄像头同一时刻只能被一个应用调用。<br>
+              <strong>最常见排查：</strong>后台打开了 <strong>QuickTime Player</strong>（或其他会议软件）并占用了摄像头。<br>
+              👉 <strong>解决方式：</strong>在屏幕 Dock 中按 <span class="code-inline">Cmd + Q</span> 彻底退出 QuickTime，然后点击下方【重新扫描硬件】！
+            </div>
+          </div>
+        `;
+      } else if (lastCameraError.name === 'NotFoundError' || lastCameraError.name === 'DevicesNotFoundError') {
+        html += `
+          <div class="diag-card" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
+            <div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px;">💻 硬件诊断：MacBook 处于【合盖模式】或摄像头休眠</div>
+            <div style="font-size: 13px; line-height: 1.6; color: #cbd5e1;">
+              合盖外接显示器时，macOS 会对自带 FaceTime 高清摄像头<strong>物理断电休眠</strong>以保障隐私！<br>
+              👉 <strong>解决方案：</strong><br>
+              1. <strong>掀开 MacBook 屏幕盖子</strong>（哪怕只掀开 2 厘米），自带镜头立即通电恢复！<br>
+              2. <strong>使用 iPhone 连续互通相机</strong>：iPhone 必须保持<strong>【黑屏锁屏 + 横向固定】</strong>，即可作为无线高清镜头。
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // System Environment Checks
+    html += `
+      <div class="diag-card">
+        <div style="font-weight: 700; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">系统与安全上下文</div>
+        <div class="diag-item">
+          <span class="diag-badge ${hasMediaDevices ? 'badge-ok' : 'badge-err'}">${hasMediaDevices ? '支持' : '不支持'}</span>
+          <div>WebRTC MediaDevices API 接口</div>
+        </div>
+        <div class="diag-item">
+          <span class="diag-badge ${isSecure ? 'badge-ok' : 'badge-err'}">${isSecure ? '安全环境 (Secure)' : '非安全环境'}</span>
+          <div>访问协议: <code>${window.location.protocol}</code> (${isFile ? '本地文件模式' : '本地服务模式'})</div>
+        </div>
+      </div>
+    `;
+
+    // Detected Cameras List
+    html += `
+      <div class="diag-card">
+        <div style="font-weight: 700; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">
+          检测到的视频输入设备 (${availableCameras.length} 个)
+        </div>
+    `;
+
+    if (availableCameras.length === 0) {
+      html += `<div style="font-size: 13px; color: var(--text-muted);">暂未列出具体设备。点击下方【重新扫描】进行授权探测。</div>`;
+    } else {
+      availableCameras.forEach((cam, i) => {
+        const isCurrent = i === currentCameraIndex && isCameraActive;
+        html += `
+          <div class="diag-item" style="justify-content: space-between;">
+            <div>${i + 1}. <strong>${cam.label || 'Camera ' + (i + 1)}</strong></div>
+            <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" onclick="window.pickCamera('${cam.deviceId}', ${i})">
+              ${isCurrent ? '✅ 当前使用中' : '切换至此设备'}
+            </button>
+          </div>
+        `;
+      });
+    }
+    html += `</div>`;
+
+    diagBody.innerHTML = html;
+    diagModal.style.display = 'flex';
+  }
+
+  window.pickCamera = function(deviceId, index) {
+    currentCameraIndex = index;
+    diagModal.style.display = 'none';
+    initCamera(deviceId);
+  };
+
+  btnHelpDiag.addEventListener('click', showDiagnostics);
+  btnCloseDiag.addEventListener('click', () => diagModal.style.display = 'none');
+  btnCloseDiagDone.addEventListener('click', () => diagModal.style.display = 'none');
+  btnDiagRescan.addEventListener('click', async () => {
+    await updateCameraList();
+    showDiagnostics();
+    showToast('硬件设备列表已刷新');
+  });
+
+  /* =========================================================
+     9. KEYBOARD SHORTCUTS
+     ========================================================= */
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.code === 'KeyH') {
+      toggleCleanMode();
+    } else if (e.code === 'KeyC') {
+      toggleCamera();
+    } else if (e.code === 'KeyS') {
+      applyShape(currentShapeIdx + 1);
+    } else if (e.code === 'KeyM') {
+      btnToggleMic.click();
+    }
+  });
+
+  // Soft startup: check camera availability without loud error popups
+  updateCameraList();
+</script>
+</body>
+</html>

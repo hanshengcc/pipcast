@@ -1,0 +1,28 @@
+{
+  "name": "pipcast",
+  "version": "1.0.0",
+  "description": "Zero-install, privacy-first floating webcam and frictionless screen recorder in your browser.",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000",
+    "serve": "npx serve -l 8000 ."
+  },
+  "keywords": [
+    "screen-recorder",
+    "webcam",
+    "floating-camera",
+    "webrtc",
+    "canvas",
+    "mediarecorder",
+    "loom-alternative",
+    "local-first",
+    "zero-install"
+  ],
+  "author": "PipCast Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ThisMac/pipcast.git"
+  }
+}
