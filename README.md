@@ -1,69 +1,116 @@
 # 🎥 PipCast
 
-> **Free-shape floating webcam bubble meets frictionless in-browser screen recorder.**  
+> **Free-shape floating webcam bubble meets frictionless in-browser 60 FPS screen recorder.**  
 > An open-source, zero-install, 100% offline alternative to Loom. Record your screen, your floating facecam, and crystal-clear audio with a single click.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero Dependency](https://img.shields.io/badge/Dependencies-Zero-emerald.svg)](#)
 [![100% Offline](https://img.shields.io/badge/Privacy-100%25%20Local-purple.svg)](#)
+[![Performance](https://img.shields.io/badge/Render-60%20FPS%20Dual--Engine-cyan.svg)](#)
+[![Resolution](https://img.shields.io/badge/Quality-1080P%20%7C%202K%2060FPS-rose.svg)](#)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-orange.svg)](#)
-[![Language](https://img.shields.io/badge/Language-中文%20%7C%20English-cyan.svg)](README_CN.md)
+[![Language](https://img.shields.io/badge/Language-中文%20%7C%20English-blueviolet.svg)](README_CN.md)
 
 [🇨🇳 简体中文文档](README_CN.md) | **English Documentation**
 
 ---
 
+![PipCast Hero Preview](docs/hero_preview.png)
+
+---
+
 ## 💡 Why PipCast?
 
-Recording presentations, tutorials, bug walk-throughs, and demos shouldn't require bloated software, subscription fees, or cloud privacy risks:
+Recording presentations, tutorials, bug walk-throughs, and software demos shouldn't require bloated software, monthly subscription fees, or cloud privacy risks:
 
 | Dimension | ☁️ Loom / Cloud Apps | 🎙️ OBS Studio | 🍏 QuickTime / Native | ⚡ **PipCast** |
 | :--- | :--- | :--- | :--- | :--- |
-| **Camera Shapes** | Rigid circle or square | Complex manual alpha masks | Rigid rectangular window | **Circle, Squircle, Rounded, Hexagon, Oval** |
-| **Installation** | Heavy extension or app | Multi-GB install & complex scene setup | Preinstalled, but no webcam compositing | **0 Install: Pure single-file browser app** |
+| **Camera Shapes** | Rigid circle or square | Complex manual alpha masks | Rigid rectangular window | **Circle, Squircle (28%), Rounded, Hexagon, Oval** |
+| **Installation** | Heavy extension or electron app | Multi-GB install & complex scene setup | Preinstalled, but no facecam compositing | **0 Install: Pure single-file browser app** |
+| **Background Tab Recording** | Often throttles in browser extensions | Background-native | N/A | **Dual-Engine Worker: Solid 60 FPS, never freezes** |
 | **Cost & Limits** | 5-minute cap, $12.50/mo subscription | Free & Open Source | Free | **100% Free & Open Source, Unlimited duration** |
-| **Privacy & Security** | Uploads raw video to third-party cloud | 100% Local | 100% Local | **100% In-Browser & Local-First (0 data leaks)** |
-| **Audio Capture** | Often requires audio extension drivers | Requires virtual audio cables | Can't mix tab audio easily | **Automatic Web Audio Mixer (Mic + System/Tab)** |
+| **Privacy & Security** | Uploads raw video to third-party cloud | 100% Local | 100% Local | **100% In-Browser & Local-First (0 bytes leaked)** |
+| **Audio Capture** | Requires audio extension drivers | Requires virtual audio cables | Can't mix tab audio easily | **Automatic Web Audio Mixer (Mic + System/Tab)** |
+| **Dock & Region Crop** | Fixed controls | Manual scene coordinates | Entire screen / static box | **4-Way Magnetic Snapping Dock + 8-Handle Crop** |
 | **Speed to Record** | 20–40 seconds loading | 1–3 minutes setup | 30 seconds | **⚡ Ready in 2 seconds** |
 
 ---
 
-## ✨ Features
+## 📸 Screenshots Showcase
 
-### 🔮 1. Free-Shape Floating Webcam
-- **5 Aesthetic Shapes**: Switch between **Circle**, **Apple Squircle (28% superellipse)**, **Rounded Rectangle**, **Cyber Hexagon**, and **Wide Oval**.
-- **Free Drag & Drop**: Move your camera bubble anywhere on the screen with real-time boundary clamping.
-- **Scroll-to-Resize**: Hover over the bubble and scroll your mouse wheel to fluidly scale from 100px to 360px.
-- **Continuity Camera & Multi-Device Support**: Works out of the box with built-in webcams, USB devices, and wireless **iPhone Continuity Camera**.
-- **Hardware-Aware Fallback**: Graceful handling for macOS clamshell mode (when laptop lid is closed) and app exclusive locks (QuickTime / Zoom).
-- **Horizontal Mirroring**: Flip camera view with one click (`🪞`).
-- **Glow Borders**: Cyberpunk Neon Blue, Regal Purple, Emerald Stealth, or Borderless.
+### 🔴 Active 60 FPS Recording with Live Presentation
+Crisp 60 FPS dual-engine compositing, floating facecam bubble, jumping audio meters, pulsating crimson recording pill, and clean timecode tracking:
+![PipCast Active Recording](docs/recording_active.png)
 
-### 🔴 2. Frictionless Screen & Audio Recording
-- **Zero Infinite Loops**: Safe, non-blocking screen picker state machine.
-- **3 Recording Modes**:
-  1. 🖥️ + 📷 **Screen + FaceCam**: Slides / code walkthrough with floating facecam.
-  2. 📹 **Camera Memo Only**: Full webcam recording without sharing screen.
-  3. 💻 **Screen Only**: Crisp screen recording with voiceover.
-- **3-Second Visual Countdown**: Breathe, switch windows, and start smoothly (with instant Skip button).
-- **Live Audio Level Meter**: Dual-track Web Audio API mixing (Mic + System/Tab) with real-time jumping green LED visualizer.
-- **Real-Time 60 FPS Compositor**: Hardware-accelerated `<canvas>` compositor combines screen video, shaped camera mask, and borders into a high-bitrate stream.
-- **Instant Export**: Instant in-page video playback preview + 1-click download as **MP4 / WebM**.
+<br/>
 
-### 🎬 3. Broadcast Clean View (`H` Key)
+### 🎬 Quality Presets (1080P 60FPS / 720P 30FPS / 2K 60FPS)
+Right-click on the Record button to instantly switch bitrate and resolution on the fly:
+![PipCast Quality Menu](docs/quality_menu.png)
+
+<br/>
+
+### ✂️ Interactive Region & Tab Crop Capture (`R` Key)
+Select exact recording coordinates with 8 drag handles, real-time pixel dimension readouts, and one-click presets to remove browser tabs or lock standard 16:9:
+![PipCast Crop Capture](docs/crop_capture.png)
+
+<br/>
+
+### 🎛️ Multi-Device Camera & Microphone Hot Switcher
+Seamlessly swap between built-in webcams, studio displays, USB mics, and wireless **iPhone Continuity Camera**:
+![PipCast Device Switcher](docs/device_menu.png)
+
+---
+
+## ✨ Features Breakdown
+
+### 🔮 1. Free-Shape Floating Webcam (FaceCam)
+- **5 Geometric Shapes**: Instantly cycle through **Circle**, **Apple Squircle (28% superellipse)**, **Rounded Rectangle**, **Cyber Hexagon**, and **Wide Oval**.
+- **Free Drag & Boundary Snapping**: Freely position your camera bubble anywhere across the screen.
+- **Scroll & Corner Resize**: Hover over the bubble and scroll your mouse wheel or drag diagonal handles to scale between 100px and 360px.
+- **Multi-Device & Continuity Camera**: Native support for Apple Silicon FaceTime HD cameras, external USB webcams, and wireless **iPhone Continuity Camera** (4K HDR).
+- **Glow Borders & Mirroring**: Cyan Glow, Cyber Purple, Emerald Stealth, or Borderless; flip camera horizontally (`🪞`) with one click.
+
+### ⚡ 2. 60 FPS Dual-Engine Background Render Loop
+- **Zero Background Freezing**: Browsers aggressively throttle background tabs, reducing `requestAnimationFrame` to 0 FPS and causing recordings of other tabs to look like frozen screenshots.
+- **The PipCast Solution**: Combines an unthrottled **Web Worker interval timer (16.6ms)** with an inaudible **Web Audio keep-alive oscillator (`gain: 0.00001`)**, completely exempting the tab from Chrome background process suspension. Recordings remain silky smooth at 60 FPS even when you switch tabs or minimize the window!
+
+### 🧲 3. 4-Way Magnetic Dock Snapping
+- **Proximity Magnetism**: Drag the floating control Dock near any screen edge (Left, Right, Top, Bottom) to trigger an elastic snap animation with glowing magnetic guides.
+- **Responsive Layout Switching**: Automatically adapts between vertical pill and horizontal bar layouts based on edge orientation.
+
+### 🎬 4. Recording Quality Presets
+- **1080P Super HD (Default)**: 1920×1080 · 60 FPS · 8 Mbps (recommended for coding, demos, and presentations).
+- **720P Smooth**: 1280×720 · 30 FPS · 3 Mbps (compact file sizes, fast exports).
+- **2K Studio Master**: 2560×1440 · 60 FPS · 16 Mbps (maximum fidelity for high-DPI Retina displays).
+
+### ✂️ 5. Interactive Region & Tab Crop Capture (`R` Key)
+- **8-Handle Bounding Box**: Drag corners and edges to isolate exact window areas.
+- **Remove Tab Bar**: One-click preset crops out the browser's top tabs and URL navigation bar.
+- **16:9 Aspect Ratio Lock**: Instantly conform any cropped region to YouTube/Bilibili presentation standards.
+
+### 🎙️ 6. Live Audio Level Visualizer & Mixer
+- **Real-Time LED Meter**: Web Audio API audio analyzer with 3-bar jumping sound waves. You will never accidentally record a presentation on mute again.
+- **Hardware Switcher**: Right-click on the microphone icon to hot-swap inputs (built-in mic, AirPods, USB audio interfaces).
+- **System Audio Mixing**: Seamlessly mix microphone voiceover with system or browser tab audio.
+
+### 🎬 7. Clean Presentation Mode (`H` Key)
 - Press **`H`** at any moment to hide all docks, toolbars, and header menus, leaving only your presentation content and floating facecam.
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## ⌨️ Keyboard Shortcuts Reference
 
 | Shortcut | Action | Description |
 | :---: | :--- | :--- |
+| **`Space`** | **Start / Stop Recording** | Trigger 3-second countdown or stop current recording |
+| **`R`** | **Crop Region Capture** | Toggle interactive bounding box and tab crop toolbar |
 | **`H`** | **Toggle Clean View** | Hide or restore all UI toolbars and docks |
 | **`S`** | **Cycle Camera Shape** | Circle $\rightarrow$ Squircle $\rightarrow$ Rounded $\rightarrow$ Hexagon $\rightarrow$ Oval |
-| **`C`** | **Toggle Camera** | Turn floating facecam ON or OFF |
-| **`M`** | **Toggle Microphone** | Mute or unmute mic voiceover |
-| **Mouse Wheel** | **Resize Bubble** | Hover over the camera bubble and scroll to scale |
+| **`C`** | **Toggle Camera** | Turn floating facecam ON or OFF (**Right-click to switch device**) |
+| **`M`** | **Toggle Microphone** | Mute or unmute mic voiceover (**Right-click to switch device**) |
+| **`Esc`** | **Cancel / Dismiss** | Cancel countdown, exit crop mode, or close preview modals |
+| **Scroll / Handles** | **Resize Bubble** | Hover and scroll mouse wheel or drag diagonal handles |
 
 ---
 
@@ -84,13 +131,14 @@ Double-click **`start.command`** in the project root.
 # Windows
 .\scripts\start.bat
 
-# Or using Node / Python directly
+# Or using Python / Node directly
 python3 -m http.server 8000
-# or: npx serve .
+# or: npx serve -l 8000 .
 ```
 
-### Option 3: Direct Browser File
-Double-click **`index.html`** to open directly in Chrome, Edge, or Safari.
+### Option 3: Direct File
+Open **`index.html`** directly in Chrome, Edge, or Safari.  
+*(Note: Chromium security policies require `http://localhost:8000` to enable microphone capture; screen recording and camera work out of the box on `file://`).*
 
 ---
 
@@ -98,9 +146,9 @@ Double-click **`index.html`** to open directly in Chrome, Edge, or Safari.
 
 ```
 pipcast/
-├── index.html              # Standalone, zero-dependency core application
-├── start.command           # 1-click launcher for macOS
-├── package.json            # Standard open-source metadata & npm scripts
+├── index.html              # Core standalone single-file web application
+├── start.command           # 1-click launcher for macOS desktop
+├── package.json            # Open-source package metadata & scripts
 ├── LICENSE                 # MIT License
 ├── README.md               # English Documentation
 ├── README_CN.md            # Chinese Documentation
@@ -109,8 +157,13 @@ pipcast/
 │   ├── start.bat           # Windows launcher
 │   └── diagnostics.html    # Raw WebRTC hardware diagnostic utility
 └── docs/
-    ├── HARDWARE_GUIDE.md   # Continuity Camera & Clamshell mode technical guide
-    └── TROUBLESHOOTING.md  # Permissions, Audio mixing & TCC error resolution
+    ├── hero_preview.png    # High-resolution hero studio UI screenshot
+    ├── recording_active.png# Active recording session screenshot
+    ├── quality_menu.png    # Quality preset switcher screenshot
+    ├── crop_capture.png    # Region & tab crop mode screenshot
+    ├── device_menu.png     # Hardware device switcher screenshot
+    ├── HARDWARE_GUIDE.md   # Continuity Camera & Clamshell technical guide
+    └── TROUBLESHOOTING.md  # Permissions, Audio mixing & TCC resolution guide
 ```
 
 ---
