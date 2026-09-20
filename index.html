@@ -1091,6 +1091,112 @@
       opacity: 1;
     }
 
+    /* 极简硬件设备快速切换悬浮菜单 (右键或快捷键唤出) */
+    .device-popover-menu {
+      position: fixed;
+      background: rgba(22, 26, 38, 0.96);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 8px;
+      min-width: 220px;
+      max-width: 320px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      animation: popover-fade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popover-fade {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .dpm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px 6px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .dpm-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .dpm-close:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+    .dpm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .dpm-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #e2e8f0;
+      transition: background 0.15s;
+    }
+    .dpm-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .dpm-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .dpm-item-check {
+      width: 14px;
+      height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .dpm-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 4px;
+    }
+
+    .dpm-refresh-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      font-size: 11px;
+      color: #94a3b8;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .dpm-refresh-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
     /* 离屏混合 Canvas */
     #composite-canvas { display: none; }
   </style>
@@ -1194,6 +1300,9 @@
       <button class="cam-tool-btn" id="btnHoverBorder" title="切换发光边框">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       </button>
+      <button class="cam-tool-btn" id="btnHoverSwitchCam" title="切换摄像头设备 (也可右键点击 Dock 镜头图标)">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
     </div>
 
     <!-- 拖拽缩放手柄（支持从右下角与左上角自由拖拽缩放） -->
@@ -1245,10 +1354,10 @@
       <span class="dock-tooltip">框选录制范围 (R)</span>
     </button>
 
-    <!-- 镜头开关 -->
-    <button class="icon-btn" id="btnDockCam" title="开关人像镜头 (快捷键: C)">
+    <!-- 镜头开关 (支持右键切换摄像头) -->
+    <button class="icon-btn" id="btnDockCam" title="开关镜头 (快捷键: C · 右键切换设备)">
       <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-      <span class="dock-tooltip" id="camStatusText">人像镜头 (C)</span>
+      <span class="dock-tooltip" id="camStatusText">镜头 (C · 右键换设备)</span>
     </button>
 
     <!-- 形状切换 -->
@@ -1265,15 +1374,15 @@
 
     <div class="dock-divider"></div>
 
-    <!-- 麦克风与动态跳动电平 -->
-    <button class="icon-btn" id="btnDockMic" title="开关麦克风收音 (快捷键: M)">
+    <!-- 麦克风与动态跳动电平 (支持右键切换麦克风) -->
+    <button class="icon-btn" id="btnDockMic" title="开关麦克风收音 (快捷键: M · 右键切换设备)">
       <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
       <div class="audio-meter">
         <div class="ab-bar" id="ab1"></div>
         <div class="ab-bar" id="ab2"></div>
         <div class="ab-bar" id="ab3"></div>
       </div>
-      <span class="dock-tooltip">麦克风 (M)</span>
+      <span class="dock-tooltip">麦克风 (M · 右键换设备)</span>
     </button>
 
     <!-- 沉浸纯净模式 -->
@@ -1349,6 +1458,20 @@
         立即切换到 localhost:8000 开启麦克风 ➔
       </a>
     </div>
+  </div>
+</div>
+
+<!-- 9. 硬件设备快捷切换悬浮菜单 -->
+<div class="device-popover-menu" id="device-context-menu">
+  <div class="dpm-header">
+    <span id="dpmTitle">📷 选择摄像头设备</span>
+    <button class="dpm-close" id="btnDpmClose" title="关闭">✕</button>
+  </div>
+  <div class="dpm-list" id="dpmList">
+    <!-- 设备列表项由 JS 动态装载 -->
+  </div>
+  <div class="dpm-footer">
+    <button class="dpm-refresh-btn" id="btnDpmRefresh">🔄 重新检测音视频硬件</button>
   </div>
 </div>
 
@@ -1478,6 +1601,17 @@
   const ab2 = document.getElementById('ab2');
   const ab3 = document.getElementById('ab3');
 
+  const btnHoverSwitchCam = document.getElementById('btnHoverSwitchCam');
+  const deviceMenu = document.getElementById('device-context-menu');
+  const dpmTitle = document.getElementById('dpmTitle');
+  const dpmList = document.getElementById('dpmList');
+  const btnDpmClose = document.getElementById('btnDpmClose');
+  const btnDpmRefresh = document.getElementById('btnDpmRefresh');
+
+  let selectedCamDeviceId = null;
+  let selectedMicDeviceId = null;
+  let currentMenuType = null; // 'cam' | 'mic'
+
   function showToast(msg) {
     toast.innerText = msg;
     toast.classList.add('show');
@@ -1495,15 +1629,23 @@
     isRequestingCamera = true;
     placeholderTitle.innerText = '唤醒中...';
     try {
-      // 简单直连，不绕复杂循环，本地文件秒开
+      // 简单直连，若指定了硬件设备则精准接入
+      const videoConstraints = {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        ...(selectedCamDeviceId ? { deviceId: { exact: selectedCamDeviceId } } : { facingMode: "user" })
+      };
       camStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        video: videoConstraints,
         audio: false
       });
     } catch (e) {
       try {
         // 极简保底
-        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        camStream = await navigator.mediaDevices.getUserMedia({
+          video: selectedCamDeviceId ? { deviceId: { exact: selectedCamDeviceId } } : true,
+          audio: false
+        });
       } catch (err) {
         console.warn('Camera failed:', err);
         placeholderTitle.innerText = '开启镜头';
@@ -1633,6 +1775,7 @@
         try {
           micStream = await navigator.mediaDevices.getUserMedia({
             audio: {
+              ...(selectedMicDeviceId ? { deviceId: { exact: selectedMicDeviceId } } : {}),
               echoCancellation: true,
               noiseSuppression: true,
               autoGainControl: true
@@ -1640,7 +1783,9 @@
           });
         } catch (constraintErr) {
           console.warn('高级音频参数受阻，回退到基础模式 audio: true:', constraintErr);
-          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: selectedMicDeviceId ? { deviceId: { exact: selectedMicDeviceId } } : true
+          });
         }
       }
     } catch (err) {
@@ -1949,6 +2094,327 @@
   window.addEventListener('resize', () => {
     if (isCropEditing) updateCropBoxDOM();
   });
+
+  /* =========================================================
+     3.9 摄像头与麦克风设备实时切换与枚举 (支持右键/悬浮图标/长按)
+     ========================================================= */
+
+  async function openDeviceMenu(type, anchorElement, mouseEvent) {
+    if (mouseEvent) {
+      mouseEvent.preventDefault();
+      mouseEvent.stopPropagation();
+    }
+    currentMenuType = type;
+    deviceMenu.style.display = 'flex';
+    dpmTitle.innerText = type === 'cam' ? '📷 选择摄像头设备' : '🎙️ 选择麦克风设备';
+    dpmList.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #94a3b8; text-align: center;">正在扫描硬件设备...</div>';
+
+    positionDeviceMenu(anchorElement, mouseEvent);
+    await populateDeviceList(type);
+  }
+
+  function positionDeviceMenu(anchorElement, mouseEvent) {
+    const menuWidth = 260;
+    const menuHeight = 220;
+    let targetX = 0;
+    let targetY = 0;
+
+    if (anchorElement) {
+      const rect = anchorElement.getBoundingClientRect();
+      if (dock.classList.contains('snap-left')) {
+        targetX = rect.right + 14;
+        targetY = rect.top;
+      } else if (dock.classList.contains('snap-right')) {
+        targetX = rect.left - menuWidth - 14;
+        targetY = rect.top;
+      } else if (dock.classList.contains('snap-bottom')) {
+        targetX = rect.left - 40;
+        targetY = rect.top - menuHeight - 14;
+      } else if (dock.classList.contains('snap-top')) {
+        targetX = rect.left - 40;
+        targetY = rect.bottom + 14;
+      } else {
+        targetX = rect.right + 14;
+        targetY = rect.top;
+      }
+    } else if (mouseEvent) {
+      targetX = mouseEvent.clientX + 10;
+      targetY = mouseEvent.clientY - 10;
+    }
+
+    targetX = Math.max(12, Math.min(window.innerWidth - menuWidth - 12, targetX));
+    targetY = Math.max(12, Math.min(window.innerHeight - menuHeight - 12, targetY));
+
+    deviceMenu.style.left = `${targetX}px`;
+    deviceMenu.style.top = `${targetY}px`;
+  }
+
+  function closeDeviceMenu() {
+    deviceMenu.style.display = 'none';
+    currentMenuType = null;
+  }
+
+  async function populateDeviceList(type) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      dpmList.innerHTML = '<div style="padding: 12px; font-size: 12px; color: #f87171; text-align: center;">浏览器不支持设备枚举</div>';
+      return;
+    }
+
+    try {
+      let allDevices = await navigator.mediaDevices.enumerateDevices();
+      const targetKind = type === 'cam' ? 'videoinput' : 'audioinput';
+      let devices = allDevices.filter(d => d.kind === targetKind);
+
+      // 若未开启过权限导致设备无 label，主动尝试轻量调用以解封真实名称
+      const hasEmptyLabels = devices.length > 0 && devices.some(d => !d.label);
+      if (hasEmptyLabels) {
+        try {
+          if (type === 'cam' && !camStream) {
+            const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            probe.getTracks().forEach(t => t.stop());
+          } else if (type === 'mic' && !micStream && window.location.protocol !== 'file:') {
+            const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+            probe.getTracks().forEach(t => t.stop());
+          }
+          allDevices = await navigator.mediaDevices.enumerateDevices();
+          devices = allDevices.filter(d => d.kind === targetKind);
+        } catch (probeErr) {
+          console.warn('Probe permission for labels bypassed:', probeErr);
+        }
+      }
+
+      if (devices.length === 0) {
+        dpmList.innerHTML = `<div style="padding: 14px; font-size: 12px; color: #94a3b8; text-align: center;">未检测到可用的${type === 'cam' ? '摄像头' : '麦克风'}<br><span style="font-size: 11px; opacity: 0.7;">(请检查系统授权或硬件连接)</span></div>`;
+        return;
+      }
+
+      // 确定当前活动的 deviceId
+      let activeDeviceId = null;
+      if (type === 'cam') {
+        if (camStream && camStream.active && camStream.getVideoTracks().length > 0) {
+          activeDeviceId = camStream.getVideoTracks()[0].getSettings().deviceId || selectedCamDeviceId;
+        } else {
+          activeDeviceId = selectedCamDeviceId;
+        }
+      } else {
+        if (micStream && micStream.active && micStream.getAudioTracks().length > 0) {
+          activeDeviceId = micStream.getAudioTracks()[0].getSettings().deviceId || selectedMicDeviceId;
+        } else {
+          activeDeviceId = selectedMicDeviceId;
+        }
+      }
+
+      dpmList.innerHTML = '';
+      devices.forEach((dev, idx) => {
+        const item = document.createElement('div');
+        item.className = 'dpm-item';
+
+        const isCurrentlyActive = (activeDeviceId && dev.deviceId === activeDeviceId) || (!activeDeviceId && idx === 0 && ((type === 'cam' && isCameraActive) || (type === 'mic' && isMicActive)));
+        if (isCurrentlyActive) item.classList.add('active');
+
+        let rawLabel = dev.label || `${type === 'cam' ? '摄像头' : '麦克风'} ${idx + 1}`;
+        let displayLabel = rawLabel;
+        if (displayLabel.length > 24) {
+          displayLabel = displayLabel.substring(0, 22) + '...';
+        }
+
+        item.innerHTML = `
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${rawLabel}">
+            ${type === 'cam' ? '📷' : '🎙️'} ${displayLabel}
+          </span>
+          <span class="dpm-item-check">${isCurrentlyActive ? '✓' : ''}</span>
+        `;
+
+        item.addEventListener('click', async () => {
+          if (type === 'cam') {
+            await switchCamera(dev.deviceId);
+          } else {
+            await switchMicrophone(dev.deviceId);
+          }
+          closeDeviceMenu();
+        });
+
+        dpmList.appendChild(item);
+      });
+    } catch (err) {
+      console.warn('Enumerate devices failed:', err);
+      dpmList.innerHTML = `<div style="padding: 12px; font-size: 12px; color: #f87171; text-align: center;">扫描设备失败: ${err.message}</div>`;
+    }
+  }
+
+  async function switchCamera(deviceId) {
+    selectedCamDeviceId = deviceId;
+    isRequestingCamera = true;
+    placeholderTitle.innerText = '切换中...';
+
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+    } catch (e) {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({
+          video: deviceId ? { deviceId: { exact: deviceId } } : true,
+          audio: false
+        });
+      } catch (err) {
+        console.warn('Switch camera error:', err);
+        showToast('切换摄像头失败: ' + (err.message || err.name));
+        isRequestingCamera = false;
+        return;
+      }
+    } finally {
+      isRequestingCamera = false;
+    }
+
+    if (camStream) {
+      camVideo.srcObject = camStream;
+      camVideo.style.display = 'block';
+      camPlaceholder.style.display = 'none';
+      isCameraActive = true;
+      btnDockCam.classList.add('active');
+      camStatusText.innerText = '镜头 开';
+
+      const track = camStream.getVideoTracks()[0];
+      const deviceName = track ? (track.label || '目标摄像头') : '目标摄像头';
+      showToast(`已切换至: ${deviceName}`);
+    }
+  }
+
+  async function switchMicrophone(deviceId) {
+    selectedMicDeviceId = deviceId;
+    isRequestingMic = true;
+
+    if (micStream) {
+      micStream.getTracks().forEach(t => t.stop());
+      micStream = null;
+    }
+
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+    } catch (e) {
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: deviceId ? { deviceId: { exact: deviceId } } : true
+        });
+      } catch (err) {
+        console.warn('Switch mic error:', err);
+        showToast('切换麦克风失败: ' + (err.message || err.name));
+        isRequestingMic = false;
+        return;
+      }
+    } finally {
+      isRequestingMic = false;
+    }
+
+    if (micStream) {
+      isMicActive = true;
+      btnDockMic.classList.add('active');
+      micStream.getAudioTracks().forEach(t => t.enabled = true);
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!audioContext) audioContext = new AudioCtx();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {});
+        }
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 32;
+        source.connect(analyserNode);
+        runAudioLoop();
+
+        // 若录制正在进行中，平滑将新麦克风连接入录制混音节点
+        if (isRecording && recDest) {
+          source.connect(recDest);
+          activeAudioSources.push(source);
+        }
+      } catch (audioErr) {
+        console.warn('Audio meter re-link warning:', audioErr);
+      }
+
+      const track = micStream.getAudioTracks()[0];
+      const deviceName = track ? (track.label || '目标麦克风') : '目标麦克风';
+      showToast(`已切换至: ${deviceName}`);
+    }
+  }
+
+  // 绑定事件：右键菜单、悬浮栏按钮、长按与关闭
+  btnDockCam.addEventListener('contextmenu', (e) => openDeviceMenu('cam', btnDockCam, e));
+  btnDockMic.addEventListener('contextmenu', (e) => openDeviceMenu('mic', btnDockMic, e));
+
+  // 长按支持（触控板或单键鼠标友好）
+  let camLongPressTimer = null;
+  btnDockCam.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    camLongPressTimer = setTimeout(() => openDeviceMenu('cam', btnDockCam), 450);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+    btnDockCam.addEventListener(evt, () => clearTimeout(camLongPressTimer));
+  });
+
+  let micLongPressTimer = null;
+  btnDockMic.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    micLongPressTimer = setTimeout(() => openDeviceMenu('mic', btnDockMic), 450);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+    btnDockMic.addEventListener(evt, () => clearTimeout(micLongPressTimer));
+  });
+
+  if (btnHoverSwitchCam) {
+    btnHoverSwitchCam.addEventListener('click', (e) => openDeviceMenu('cam', btnHoverSwitchCam, e));
+  }
+
+  if (btnDpmClose) {
+    btnDpmClose.addEventListener('click', closeDeviceMenu);
+  }
+
+  if (btnDpmRefresh) {
+    btnDpmRefresh.addEventListener('click', () => {
+      if (currentMenuType) populateDeviceList(currentMenuType);
+    });
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    if (deviceMenu && deviceMenu.style.display === 'flex') {
+      if (!deviceMenu.contains(e.target) && !btnDockCam.contains(e.target) && !btnDockMic.contains(e.target) && (!btnHoverSwitchCam || !btnHoverSwitchCam.contains(e.target))) {
+        closeDeviceMenu();
+      }
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && deviceMenu && deviceMenu.style.display === 'flex') {
+      closeDeviceMenu();
+    }
+  });
+
+  // 监听硬件插拔，热更新设备清单
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', async () => {
+      if (deviceMenu && deviceMenu.style.display === 'flex' && currentMenuType) {
+        populateDeviceList(currentMenuType);
+      }
+    });
+  }
 
   /* =========================================================
      4. 形状、发光、缩放与拖拽
