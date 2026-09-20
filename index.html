@@ -1433,7 +1433,7 @@
       </button>
     </div>
     <div style="font-size: 13px; line-height: 1.7; color: #cbd5e1; display: flex; flex-direction: column; gap: 10px;">
-      <div>• <strong>麦克风权限提示</strong>：若在浏览器点击“允许”后仍提示未开启，是因 macOS 系统层拦截。请前往【系统设置 ➔ 隐私与安全性 ➔ 麦克风】确保已勾选允许“Google Chrome”。</div>
+      <div>• <strong>系统设置已开启麦克风却报错？</strong>这是因 macOS 安全机制所致：系统设置中的权限更改<strong>不会直接对正在运行的 Chrome 生效</strong>。请直接按键盘 <span style="font-family: monospace; color: var(--accent);">Cmd + Q</span> <strong>彻底退出 Chrome 并重新打开</strong>，系统级权限即刻注入生效！同时确认地址栏左侧图标中的麦克风为“允许”。</div>
       <div>• <strong>指定框选录制范围</strong>：连接屏幕或标签页后，点击左侧栏的【✂️ 框选范围】或按 <span style="font-family: monospace; color: var(--accent);">R</span>，即可在屏幕上自由拖拽裁剪框，支持“去除网页标签栏”等预设，录制视频仅包含框选区域！</div>
       <div>• <strong>MacBook 外接屏合盖</strong>：若笔记本盖子闭合，macOS 会对自带镜头物理断电。只需掀开屏幕一条缝即可通电。</div>
       <div>• <strong>iPhone 连续互通相机</strong>：若用 iPhone 作为超清镜头，请将 iPhone 保持<strong>黑屏锁屏且横放固定</strong>。</div>
@@ -1796,12 +1796,19 @@
 
       const isSystemDenied = err.message && (
         err.message.toLowerCase().includes('system') ||
-        err.message.toLowerCase().includes('os') ||
-        err.message.toLowerCase().includes('denied')
+        err.message.toLowerCase().includes('os')
       );
 
-      if (isSystemDenied || err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        showToast('⚠️ 麦克风受限：请在【Mac系统设置 -> 隐私与安全性 -> 麦克风】勾选 Chrome，并在网页中允许');
+      if (isSystemDenied) {
+        showToast('⚠️ 系统权限已改动：请按【Cmd + Q 完全退出 Chrome 并重新打开】即可生效！');
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        if (window.location.protocol === 'file:') {
+          showToast('⚠️ file:// 本地文件协议受浏览器安全限制，请在 localhost:8000 中使用');
+        } else {
+          showToast('⚠️ 麦克风受限：若系统设置已勾选，请按【Cmd + Q 完全重启 Chrome】并在地址栏左侧允许');
+        }
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        showToast('⚠️ 麦克风被占用 (如 Teams/Zoom 独占)，请在会议应用中断开音频后重试');
       } else if (err.name === 'NotFoundError') {
         showToast('未检测到可用的麦克风硬件');
       } else {
