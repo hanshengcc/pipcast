@@ -802,7 +802,7 @@
         <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <video class="video-preview-player" id="modal-video" controls autoplay></video>
+    <video class="video-preview-player" id="modal-video" controls playsinline preload="auto"></video>
     <div class="modal-bottom">
       <span style="font-size: 12px; color: var(--text-muted);" id="rec-info-text">本地生成 · 60 FPS</span>
       <div style="display: flex; gap: 8px;">
@@ -856,7 +856,11 @@
   let isCameraActive = false;
   let isMicActive = false;
   let isRequestingMic = false;
+  let isRequestingCamera = false;
   let isRecording = false;
+  let isCountingDown = false;
+  let countdownInterval = null;
+  let activeAudioSources = [];
   let isCleanMode = false;
   let isMirrored = true;
   let isSelectingScreen = false;
@@ -948,6 +952,9 @@
      ========================================================= */
 
   async function initCamera() {
+    if (isRequestingCamera) return;
+    if (isCameraActive && camStream && camStream.active) return;
+    isRequestingCamera = true;
     placeholderTitle.innerText = '唤醒中...';
     try {
       // 简单直连，不绕复杂循环，本地文件秒开
@@ -964,11 +971,15 @@
         placeholderTitle.innerText = '开启镜头';
         if (err.name === 'NotFoundError') {
           showToast('未检测到摄像头 (若Mac合盖请掀开屏幕)');
+        } else if (err.name === 'NotAllowedError') {
+          showToast('摄像头权限未允许，请在浏览器地址栏左侧或系统设置中开启');
         } else {
           showToast('摄像头无法启动，请检查权限');
         }
         return;
       }
+    } finally {
+      isRequestingCamera = false;
     }
 
     if (camStream) {
@@ -1043,7 +1054,6 @@
 
   btnDockScreen.addEventListener('click', selectScreen);
   heroBtnScreen.addEventListener('click', async () => {
-    if (!isCameraActive) initCamera();
     await selectScreen();
     if (screenStream) {
       showToast('屏幕已连接！点击下方【🔴 开始录制】或按空格键');
@@ -1364,9 +1374,7 @@
      6. 60 FPS 录制与 Canvas 实时合成
      ========================================================= */
 
-  function drawComposite() {
-    if (!isRecording) return;
-
+  function renderCompositeFrame() {
     if (screenVideo.style.display !== 'none' && screenVideo.videoWidth) {
       ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
     } else {
@@ -1377,8 +1385,8 @@
     if (isCameraActive && camVideo.videoWidth) {
       const sr = stage.getBoundingClientRect();
       const br = camBubble.getBoundingClientRect();
-      const sx = canvas.width / sr.width;
-      const sy = canvas.height / sr.height;
+      const sx = canvas.width / (sr.width || 1);
+      const sy = canvas.height / (sr.height || 1);
 
       const cx = (br.left - sr.left) * sx;
       const cy = (br.top - sr.top) * sy;
@@ -1431,25 +1439,81 @@
         ctx.restore();
       }
     }
+  }
 
+  function drawComposite() {
+    if (!isRecording) return;
+    renderCompositeFrame();
     requestAnimationFrame(drawComposite);
   }
 
+  function cancelCountdown() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    isCountingDown = false;
+    countdownOverlay.style.display = 'none';
+  }
+
   function startCountdown() {
+    if (isCountingDown || isRecording) return;
+    isCountingDown = true;
     let c = 3;
     countdownNum.innerText = c;
     countdownOverlay.style.display = 'flex';
 
-    const interval = setInterval(() => {
+    countdownInterval = setInterval(() => {
       c--;
       if (c > 0) {
         countdownNum.innerText = c;
       } else {
-        clearInterval(interval);
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        isCountingDown = false;
         countdownOverlay.style.display = 'none';
         beginRecording();
       }
     }, 850);
+  }
+
+  function getSupportedMimeType(hasAudio) {
+    const candidates = hasAudio
+      ? [
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm',
+          'video/mp4;codecs=avc1,mp4a.40.2',
+          'video/mp4'
+        ]
+      : [
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm',
+          'video/mp4;codecs=avc1',
+          'video/mp4'
+        ];
+    for (const t of candidates) {
+      if (MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+  }
+
+  function resetRecordUI() {
+    isRecording = false;
+    btnRecord.classList.remove('recording');
+    btnRecord.classList.remove('pulse-attention');
+    dock.classList.remove('recording-active');
+    recordBtnText.innerText = '开始录制';
+    if (recordIconWrapper) {
+      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>';
+    }
+    recDot.classList.remove('active');
+    if (headerRecPill) headerRecPill.style.display = 'none';
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
   }
 
   async function beginRecording() {
@@ -1457,38 +1521,63 @@
     canvas.width = 1920;
     canvas.height = 1080;
 
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!audioContext) audioContext = new AudioCtx();
-    if (audioContext.state === 'suspended') await audioContext.resume();
+    // 先画出首帧真实画面，确保 canvas.captureStream(60) 初始就有关键帧
+    renderCompositeFrame();
 
-    const dest = audioContext.createMediaStreamDestination();
+    let hasAudio = false;
+    let recDest = null;
+    activeAudioSources = [];
 
-    if (screenStream && screenStream.getAudioTracks().length > 0) {
-      try {
-        audioContext.createMediaStreamSource(screenStream).connect(dest);
-      } catch (e) {}
-    }
+    // 检查麦克风与屏幕音频（严谨原则：绝不在录制开始时弹窗或调用 setupMic）
+    const hasScreenAudio = Boolean(screenStream && screenStream.getAudioTracks().some(t => t.readyState === 'live'));
+    const hasMicAudio = Boolean(isMicActive && micStream && micStream.active && micStream.getAudioTracks().some(t => t.readyState === 'live'));
 
-    if (isMicActive) {
-      if (!micStream || !micStream.active) await setupMic();
-      if (micStream && micStream.getAudioTracks().length > 0) {
+    if (hasScreenAudio || hasMicAudio) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!audioContext) audioContext = new AudioCtx();
+      if (audioContext.state === 'suspended') {
+        try { await audioContext.resume(); } catch (e) {}
+      }
+
+      recDest = audioContext.createMediaStreamDestination();
+
+      if (hasScreenAudio) {
         try {
-          audioContext.createMediaStreamSource(micStream).connect(dest);
-        } catch (e) {}
+          const sSource = audioContext.createMediaStreamSource(screenStream);
+          sSource.connect(recDest);
+          activeAudioSources.push(sSource);
+          hasAudio = true;
+        } catch (e) {
+          console.warn('Connect screen audio error:', e);
+        }
+      }
+
+      if (hasMicAudio) {
+        try {
+          const mSource = audioContext.createMediaStreamSource(micStream);
+          mSource.connect(recDest);
+          activeAudioSources.push(mSource);
+          hasAudio = true;
+        } catch (e) {
+          console.warn('Connect mic audio error:', e);
+        }
       }
     }
 
     const stream = canvas.captureStream(60);
-    dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-
-    let mimeType = 'video/webm;codecs=vp9,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+    // 关键：只有在有真实音频源时才向 stream 添加音频轨道！
+    // 彻底解决无声录制时因空音频轨导致 Chrome 播放器等待时钟卡死在 00:00 的问题
+    if (hasAudio && recDest) {
+      recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
     }
 
+    const mimeType = getSupportedMimeType(hasAudio);
+    const options = mimeType ? { mimeType, videoBitsPerSecond: 8000000 } : { videoBitsPerSecond: 8000000 };
+
     try {
-      mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+      mediaRecorder = new MediaRecorder(stream, options);
     } catch (e) {
+      console.warn('MediaRecorder option fallback:', e);
       mediaRecorder = new MediaRecorder(stream);
     }
 
@@ -1497,22 +1586,55 @@
     };
 
     mediaRecorder.onstop = () => {
-      recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-      modalVideo.src = URL.createObjectURL(recordedBlob);
+      // 录制结束，断开录制专用的临时音频节点
+      activeAudioSources.forEach(s => {
+        try { s.disconnect(); } catch (err) {}
+      });
+      activeAudioSources = [];
+
+      if (recordedChunks.length === 0) {
+        showToast('录制数据为空，请重试');
+        resetRecordUI();
+        return;
+      }
+
+      const mime = mediaRecorder.mimeType || (hasAudio ? 'video/webm' : 'video/webm');
+      recordedBlob = new Blob(recordedChunks, { type: mime });
+
+      if (modalVideo.src && modalVideo.src.startsWith('blob:')) {
+        URL.revokeObjectURL(modalVideo.src);
+      }
+
+      const videoUrl = URL.createObjectURL(recordedBlob);
+      modalVideo.src = videoUrl;
+      modalVideo.load();
+
+      // 彻底修复 Chromium WebM duration = Infinity 导致的播放卡顿、进度条无法拖拽
+      modalVideo.onloadedmetadata = () => {
+        if (modalVideo.duration === Infinity || isNaN(modalVideo.duration)) {
+          modalVideo.currentTime = 1e101;
+          let seeked = false;
+          const resetHead = () => {
+            if (seeked) return;
+            seeked = true;
+            modalVideo.ontimeupdate = null;
+            modalVideo.onseeked = null;
+            modalVideo.currentTime = 0;
+            modalVideo.play().catch(() => {});
+          };
+          modalVideo.ontimeupdate = resetHead;
+          modalVideo.onseeked = resetHead;
+          setTimeout(resetHead, 400);
+        } else {
+          modalVideo.play().catch(() => {});
+        }
+      };
+
       const mb = (recordedBlob.size / (1024 * 1024)).toFixed(1);
       recInfoText.innerText = `大小: ${mb} MB · 时长: ${timerDisplay.innerText}`;
       previewModal.style.display = 'flex';
 
-      btnRecord.classList.remove('recording');
-      btnRecord.classList.remove('pulse-attention');
-      dock.classList.remove('recording-active');
-      recordBtnText.innerText = '开始录制';
-      if (recordIconWrapper) {
-        recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>';
-      }
-      recDot.classList.remove('active');
-      if (headerRecPill) headerRecPill.style.display = 'none';
-      clearInterval(timerInterval);
+      resetRecordUI();
     };
 
     mediaRecorder.start(200);
@@ -1545,7 +1667,13 @@
 
   function stopRecording() {
     if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
+      try {
+        if (mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      } catch (e) {
+        console.warn('Stop recorder error:', e);
+      }
       isRecording = false;
     }
   }
@@ -1553,10 +1681,19 @@
   btnRecord.addEventListener('click', () => {
     if (isRecording) {
       stopRecording();
+    } else if (isCountingDown) {
+      cancelCountdown();
+      showToast('已取消录制倒计时');
     } else {
       if (!screenStream && !isCameraActive) {
-        welcomeHero.style.display = 'none';
-        initCamera();
+        showToast('⚠️ 当前未连接屏幕且未开启摄像头，请先配置画面来源');
+        btnDockScreen.classList.add('pulse-attention');
+        btnDockCam.classList.add('pulse-attention');
+        setTimeout(() => {
+          btnDockScreen.classList.remove('pulse-attention');
+          btnDockCam.classList.remove('pulse-attention');
+        }, 2500);
+        return;
       }
       startCountdown();
     }
@@ -1573,7 +1710,7 @@
   btnDownload.addEventListener('click', () => {
     if (!recordedBlob) return;
     const a = document.createElement('a');
-    a.href = modalVideo.src;
+    a.href = modalVideo.src || URL.createObjectURL(recordedBlob);
     const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
     a.download = `PipCast_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${ext}`;
     a.click();
@@ -1589,7 +1726,13 @@
     if (confirm('确认放弃本段录制？')) {
       previewModal.style.display = 'none';
       modalVideo.pause();
+      if (modalVideo.src && modalVideo.src.startsWith('blob:')) {
+        URL.revokeObjectURL(modalVideo.src);
+      }
+      modalVideo.removeAttribute('src');
+      modalVideo.load();
       recordedBlob = null;
+      recordedChunks = [];
     }
   });
 
@@ -1608,7 +1751,16 @@
       e.preventDefault();
       btnRecord.click();
     } else if (e.code === 'Escape') {
-      if (isRecording) stopRecording();
+      if (isCountingDown) {
+        cancelCountdown();
+        showToast('已取消录制倒计时');
+      }
+      if (isRecording) {
+        stopRecording();
+      }
+      previewModal.style.display = 'none';
+      helpModal.style.display = 'none';
+      modalVideo.pause();
     }
   });
 </script>
