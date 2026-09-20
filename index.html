@@ -23,11 +23,15 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    html, body {
+      height: 100%;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
       background: radial-gradient(circle at 50% 30%, #252a3a 0%, #181b24 100%);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -39,12 +43,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 24px;
-      background: rgba(24, 27, 36, 0.6);
+      padding: 10px 24px;
+      background: rgba(24, 27, 36, 0.7);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--card-border);
       z-index: 100;
       transition: transform 0.3s, opacity 0.3s;
+      flex-shrink: 0;
     }
 
     .brand {
@@ -82,6 +87,8 @@
     /* 主画布空间 */
     #stage-container {
       flex: 1;
+      min-height: 0;
+      min-width: 0;
       position: relative;
       background: transparent;
       overflow: hidden;
@@ -91,10 +98,13 @@
     }
 
     #screen-video {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: none;
+      z-index: 1;
     }
 
     /* 极简中心引导卡（无多余营销文字） */
@@ -316,8 +326,8 @@
 
     /* 极简精致底部控制 Dock（纯图标设计，如 Dynamic Island） */
     #dock {
-      position: absolute;
-      bottom: 22px;
+      position: fixed;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--card-bg);
@@ -328,9 +338,14 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-      z-index: 90;
-      transition: opacity 0.3s, transform 0.3s;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      z-index: 350; /* 确保永远在最前层，绝对不被任何内容遮挡 */
+      transition: opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    #dock.recording-active {
+      border-color: rgba(244, 63, 94, 0.5);
+      box-shadow: 0 16px 40px rgba(244, 63, 94, 0.3);
     }
 
     #dock.hidden-ui {
@@ -463,25 +478,36 @@
     }
 
     .btn-record-pill.recording {
-      animation: record-glow 1.6s infinite;
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      animation: record-glow 1.5s infinite;
     }
     @keyframes record-glow {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
       70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
       100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
     }
 
-    /* 3秒倒计时浮层 */
+    @keyframes pulse-attention {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(244, 63, 94, 0.8); }
+      100% { transform: scale(1); }
+    }
+    .pulse-attention {
+      animation: pulse-attention 1.2s infinite ease-in-out;
+    }
+
+    /* 3秒倒计时浮层（不挡住底部Dock） */
     #countdown-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(24, 27, 36, 0.7);
-      backdrop-filter: blur(16px);
+      background: rgba(24, 27, 36, 0.45);
+      backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 300;
+      z-index: 240; /* 低于 dock 的 350，倒计时期间控制栏依然清晰可见 */
+      pointer-events: none;
     }
 
     .countdown-num {
@@ -581,6 +607,15 @@
     <span class="brand-title">PipCast</span>
   </div>
 
+  <!-- 录制中顶部指示器（保证任何情况下都能一眼看到停止按钮） -->
+  <div id="header-rec-pill" style="display: none; align-items: center; gap: 10px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); padding: 4px 14px; border-radius: 999px;">
+    <span class="rec-pulse-dot active" style="display: inline-block;"></span>
+    <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #f43f5e;" id="header-timer">00:00</span>
+    <button class="icon-btn" id="btnHeaderStop" style="padding: 4px 12px; font-size: 12px; background: #f43f5e; color: #fff; border: none; font-weight: 600; border-radius: 999px; cursor: pointer;">
+      ⏹ 停止录制
+    </button>
+  </div>
+
   <div class="header-actions">
     <button class="icon-btn icon-btn-pure" id="btnHelp" title="硬件提示与排查">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -607,7 +642,7 @@
         </button>
         <button class="action-card-btn" id="heroBtnCam">
           <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <span>纯镜头出镜</span>
+          <span>仅录人像</span>
         </button>
       </div>
     </div>
@@ -684,8 +719,10 @@
 
     <!-- 核心录制按钮 -->
     <button class="btn-record-pill" id="btnRecord">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-      <span id="recordBtnText">录制</span>
+      <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
+        <svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+      </span>
+      <span id="recordBtnText">开始录制</span>
     </button>
   </div>
 </main>
@@ -794,6 +831,10 @@
   const btnDockMic = document.getElementById('btnDockMic');
   const btnRecord = document.getElementById('btnRecord');
   const recordBtnText = document.getElementById('recordBtnText');
+  const recordIconWrapper = document.getElementById('recordIconWrapper');
+  const headerRecPill = document.getElementById('header-rec-pill');
+  const headerTimer = document.getElementById('header-timer');
+  const btnHeaderStop = document.getElementById('btnHeaderStop');
   const recDot = document.getElementById('rec-dot');
   const timerDisplay = document.getElementById('timer-display');
   const screenStatusText = document.getElementById('screenStatusText');
@@ -938,12 +979,17 @@
   heroBtnScreen.addEventListener('click', async () => {
     if (!isCameraActive) initCamera();
     await selectScreen();
+    if (screenStream) {
+      showToast('屏幕已连接！点击下方【🔴 开始录制】或按空格键');
+      btnRecord.classList.add('pulse-attention');
+    }
   });
 
   heroBtnCam.addEventListener('click', () => {
     welcomeHero.style.display = 'none';
     if (!isCameraActive) initCamera();
-    showToast('已进入纯出镜录制');
+    showToast('人像镜头已就绪！点击下方【🔴 开始录制】或按空格键');
+    btnRecord.classList.add('pulse-attention');
   });
 
   /* =========================================================
@@ -1264,8 +1310,14 @@
       previewModal.style.display = 'flex';
 
       btnRecord.classList.remove('recording');
-      recordBtnText.innerText = '录制';
+      btnRecord.classList.remove('pulse-attention');
+      dock.classList.remove('recording-active');
+      recordBtnText.innerText = '开始录制';
+      if (recordIconWrapper) {
+        recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>';
+      }
       recDot.classList.remove('active');
+      if (headerRecPill) headerRecPill.style.display = 'none';
       clearInterval(timerInterval);
     };
 
@@ -1274,19 +1326,27 @@
     drawComposite();
 
     btnRecord.classList.add('recording');
-    recordBtnText.innerText = '停止';
+    btnRecord.classList.remove('pulse-attention');
+    dock.classList.add('recording-active');
+    recordBtnText.innerText = '停止录制';
+    if (recordIconWrapper) {
+      recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+    }
     recDot.classList.add('active');
+    if (headerRecPill) headerRecPill.style.display = 'flex';
     recordSeconds = 0;
     timerDisplay.innerText = '00:00';
+    if (headerTimer) headerTimer.innerText = '00:00';
 
     timerInterval = setInterval(() => {
       recordSeconds++;
       const m = Math.floor(recordSeconds / 60).toString().padStart(2, '0');
       const s = (recordSeconds % 60).toString().padStart(2, '0');
       timerDisplay.innerText = `${m}:${s}`;
+      if (headerTimer) headerTimer.innerText = `${m}:${s}`;
     }, 1000);
 
-    showToast('🔴 录制已开始 (按 H 隐藏工具栏)');
+    showToast('🔴 录制已开始 (按 H 隐藏工具栏，按空格键停止)');
   }
 
   function stopRecording() {
@@ -1307,6 +1367,10 @@
       startCountdown();
     }
   });
+
+  if (btnHeaderStop) {
+    btnHeaderStop.addEventListener('click', stopRecording);
+  }
 
   /* =========================================================
      7. 下载与重录
@@ -1346,6 +1410,12 @@
     else if (e.code === 'KeyC') toggleCamera();
     else if (e.code === 'KeyS') applyShape(currentShapeIdx + 1);
     else if (e.code === 'KeyM') btnDockMic.click();
+    else if (e.code === 'Space') {
+      e.preventDefault();
+      btnRecord.click();
+    } else if (e.code === 'Escape') {
+      if (isRecording) stopRecording();
+    }
   });
 </script>
 </body>
