@@ -375,7 +375,7 @@
       font-weight: 600;
     }
 
-    /* 极简精致左侧竖列控制 Dock */
+    /* 极简精致可吸附竖列控制 Dock */
     #dock {
       position: fixed;
       left: 18px;
@@ -384,7 +384,7 @@
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
-      padding: 10px 8px;
+      padding: 6px 8px 10px 8px;
       border-radius: 20px;
       display: flex;
       flex-direction: column;
@@ -392,7 +392,10 @@
       gap: 7px;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
       z-index: 350; /* 确保永远在最前层 */
-      transition: opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+      transition: opacity 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
 
     #dock.recording-active {
@@ -403,7 +406,83 @@
     #dock.hidden-ui {
       opacity: 0;
       pointer-events: none;
-      transform: translateY(-50%) translateX(-40px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    #dock.snap-left.hidden-ui {
+      transform: translateX(-40px) !important;
+    }
+    #dock.snap-right.hidden-ui {
+      transform: translateX(40px) !important;
+    }
+
+    /* 拖拽吸附抓手手柄 */
+    .dock-drag-handle {
+      width: 100%;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      padding: 3px 0 4px 0;
+      touch-action: none;
+    }
+
+    .dock-drag-bar {
+      width: 22px;
+      height: 3.5px;
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .dock-drag-handle:hover .dock-drag-bar,
+    #dock:hover .dock-drag-bar {
+      background: rgba(255, 255, 255, 0.55);
+      width: 26px;
+    }
+
+    .dock-drag-handle:hover .dock-drag-bar {
+      background: var(--accent);
+    }
+
+    /* 拖拽中状态 */
+    #dock.is-dragging {
+      cursor: grabbing !important;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), 0 0 0 2px var(--accent) !important;
+      transform: scale(1.03) !important;
+      transition: box-shadow 0.15s ease, transform 0.15s ease !important;
+    }
+
+    #dock.is-dragging * {
+      cursor: grabbing !important;
+    }
+
+    #dock.is-dragging .dock-tooltip {
+      display: none !important;
+    }
+
+    /* 侧边磁吸导引发光指示条 */
+    .dock-snap-guide {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 18px var(--accent), 0 0 6px var(--accent);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 340;
+      transition: opacity 0.2s ease;
+    }
+
+    .dock-snap-guide.guide-left {
+      left: 0;
+      opacity: 0.85;
+    }
+
+    .dock-snap-guide.guide-right {
+      right: 0;
+      opacity: 0.85;
     }
 
     .dock-divider {
@@ -462,12 +541,10 @@
       border-radius: 12px;
     }
 
-    /* 悬停向右侧展开的轻量 Tooltip */
+    /* 悬停轻量 Tooltip (自适应左右侧边吸附方向) */
     .dock-tooltip {
       position: absolute;
-      left: calc(100% + 12px);
       top: 50%;
-      transform: translateY(-50%) translateX(-6px);
       background: rgba(20, 24, 33, 0.96);
       backdrop-filter: blur(12px);
       border: 1px solid var(--card-border);
@@ -484,7 +561,16 @@
       z-index: 400;
     }
 
-    .dock-tooltip::before {
+    /* 靠左吸附时：Tooltip 向右展开 */
+    #dock.snap-left .dock-tooltip,
+    #dock:not(.snap-right) .dock-tooltip {
+      left: calc(100% + 12px);
+      right: auto;
+      transform: translateY(-50%) translateX(-6px);
+    }
+
+    #dock.snap-left .dock-tooltip::before,
+    #dock:not(.snap-right) .dock-tooltip::before {
       content: '';
       position: absolute;
       right: 100%;
@@ -495,8 +581,34 @@
       border-color: transparent rgba(20, 24, 33, 0.96) transparent transparent;
     }
 
-    .icon-btn:hover .dock-tooltip,
-    .btn-record-pill:hover .dock-tooltip {
+    #dock.snap-left .icon-btn:hover .dock-tooltip,
+    #dock.snap-left .btn-record-pill:hover .dock-tooltip,
+    #dock:not(.snap-right) .icon-btn:hover .dock-tooltip,
+    #dock:not(.snap-right) .btn-record-pill:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    /* 靠右吸附时：Tooltip 向左展开，避免溢出屏幕 */
+    #dock.snap-right .dock-tooltip {
+      right: calc(100% + 12px);
+      left: auto;
+      transform: translateY(-50%) translateX(6px);
+    }
+
+    #dock.snap-right .dock-tooltip::before {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: transparent transparent transparent rgba(20, 24, 33, 0.96);
+    }
+
+    #dock.snap-right .icon-btn:hover .dock-tooltip,
+    #dock.snap-right .btn-record-pill:hover .dock-tooltip {
       opacity: 1;
       transform: translateY(-50%) translateX(0);
     }
@@ -900,8 +1012,13 @@
     </div>
   </div>
 
-  <!-- 4. 左侧居中极简竖列控制 Dock 栏 -->
-  <div id="dock">
+  <!-- 4. 极简精致可吸附竖列控制 Dock 栏 -->
+  <div id="dock" class="snap-left">
+    <!-- 拖拽移动与边缘吸附手柄 -->
+    <div class="dock-drag-handle" id="dockDragHandle" title="按住拖拽 · 靠近边缘自动磁吸">
+      <div class="dock-drag-bar"></div>
+    </div>
+
     <!-- 核心录制按钮 -->
     <button class="btn-record-pill" id="btnRecord" title="开始/停止录制 (快捷键: 空格)">
       <span id="recordIconWrapper" style="display: inline-flex; align-items: center;">
@@ -968,6 +1085,9 @@
     </button>
   </div>
 </main>
+
+<!-- 侧边磁吸导引光晕指示条 -->
+<div id="dock-snap-guide" class="dock-snap-guide"></div>
 
 <!-- 5. 3秒沉浸式倒计时 -->
 <div id="countdown-overlay">
@@ -1079,6 +1199,8 @@
 
   const mainHeader = document.getElementById('main-header');
   const dock = document.getElementById('dock');
+  const dockDragHandle = document.getElementById('dockDragHandle');
+  const dockSnapGuide = document.getElementById('dock-snap-guide');
   const btnDockScreen = document.getElementById('btnDockScreen');
   const btnDockCrop = document.getElementById('btnDockCrop');
   const btnDockCam = document.getElementById('btnDockCam');
@@ -1800,6 +1922,187 @@
   }
 
   btnCleanMode.addEventListener('click', toggleClean);
+
+  /* =========================================================
+     5.1 控制 Dock 拖拽与智能侧边磁吸系统 (Magnetic Dock Snapping)
+     ========================================================= */
+  let isDockDragging = false;
+  let dockDragStartX = 0;
+  let dockDragStartY = 0;
+  let dockInitLeft = 0;
+  let dockInitTop = 0;
+  let dockMoved = false;
+  let dockCurrentSide = 'left'; // 'left' 或 'right'
+  const DOCK_EDGE_MARGIN = 18;
+  const DOCK_SNAP_THRESHOLD = 130; // 靠近屏幕边缘触发磁吸预判
+
+  function applyDockSnap(side, topRatio = 0.5, animate = true) {
+    dockCurrentSide = side;
+    const dockW = dock.offsetWidth || 56;
+    const dockH = dock.offsetHeight || 390;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
+    let targetLeft = (side === 'right') ? (winW - dockW - DOCK_EDGE_MARGIN) : DOCK_EDGE_MARGIN;
+    let targetTop = (winH * topRatio) - (dockH / 2);
+    // 顶部与底部留出安全内边距，避开系统栏与顶栏
+    targetTop = Math.max(16, Math.min(targetTop, winH - dockH - 16));
+
+    dock.classList.toggle('snap-left', side === 'left');
+    dock.classList.toggle('snap-right', side === 'right');
+
+    if (animate) {
+      dock.style.transition = 'left 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.15), top 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, box-shadow 0.2s ease';
+    } else {
+      dock.style.transition = 'none';
+    }
+
+    dock.style.transform = 'none';
+    dock.style.left = `${Math.round(targetLeft)}px`;
+    dock.style.top = `${Math.round(targetTop)}px`;
+
+    // 本地持久化记住用户偏好的停靠边缘与位置
+    try {
+      const finalRatio = (targetTop + dockH / 2) / winH;
+      localStorage.setItem('pipcast_dock_pref', JSON.stringify({ side, topRatio: finalRatio }));
+    } catch (_) {}
+  }
+
+  function initDockPosition() {
+    let side = 'left';
+    let topRatio = 0.5;
+    try {
+      const saved = localStorage.getItem('pipcast_dock_pref');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.side === 'left' || parsed.side === 'right') side = parsed.side;
+        if (typeof parsed.topRatio === 'number' && !isNaN(parsed.topRatio)) {
+          topRatio = Math.max(0.1, Math.min(0.9, parsed.topRatio));
+        }
+      }
+    } catch (_) {}
+
+    dockCurrentSide = side;
+    applyDockSnap(side, topRatio, false);
+  }
+
+  dock.addEventListener('pointerdown', (e) => {
+    // 点击按钮或卡片内部按钮时不触发整个控制栏的拖拽
+    if (e.target.closest('button') || e.target.closest('.action-card-btn')) return;
+
+    isDockDragging = true;
+    dockMoved = false;
+    dockDragStartX = e.clientX;
+    dockDragStartY = e.clientY;
+
+    const r = dock.getBoundingClientRect();
+    dockInitLeft = r.left;
+    dockInitTop = r.top;
+
+    dock.classList.add('is-dragging');
+    dock.style.transition = 'none'; // 拖动时 0 延迟跟手
+    dock.style.transform = 'scale(1.03)';
+
+    dock.setPointerCapture(e.pointerId);
+  });
+
+  dock.addEventListener('pointermove', (e) => {
+    if (!isDockDragging) return;
+
+    const dx = e.clientX - dockDragStartX;
+    const dy = e.clientY - dockDragStartY;
+
+    if (!dockMoved && Math.hypot(dx, dy) < 4) return;
+    dockMoved = true;
+
+    const dockW = dock.offsetWidth;
+    const dockH = dock.offsetHeight;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
+    let newL = dockInitLeft + dx;
+    let newT = dockInitTop + dy;
+
+    // 屏幕内移动边界安全约束
+    newL = Math.max(6, Math.min(newL, winW - dockW - 6));
+    newT = Math.max(6, Math.min(newT, winH - dockH - 6));
+
+    // 磁吸感应预判导引（靠近左侧或右侧边缘时亮起磁力光晕）
+    const distToLeft = newL;
+    const distToRight = winW - (newL + dockW);
+
+    if (distToLeft < DOCK_SNAP_THRESHOLD) {
+      dockSnapGuide.className = 'dock-snap-guide guide-left';
+    } else if (distToRight < DOCK_SNAP_THRESHOLD) {
+      dockSnapGuide.className = 'dock-snap-guide guide-right';
+    } else {
+      dockSnapGuide.className = 'dock-snap-guide';
+    }
+
+    dock.style.left = `${newL}px`;
+    dock.style.top = `${newT}px`;
+  });
+
+  function onDockDragEnd(e) {
+    if (!isDockDragging) return;
+    isDockDragging = false;
+    dock.classList.remove('is-dragging');
+    dockSnapGuide.className = 'dock-snap-guide';
+
+    try {
+      dock.releasePointerCapture(e.pointerId);
+    } catch (_) {}
+
+    if (!dockMoved) {
+      dock.style.transform = 'none';
+      return;
+    }
+
+    const dockW = dock.offsetWidth;
+    const dockH = dock.offsetHeight;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
+    const currentLeft = parseFloat(dock.style.left) || dock.getBoundingClientRect().left;
+    const currentTop = parseFloat(dock.style.top) || dock.getBoundingClientRect().top;
+    const dockCenterX = currentLeft + dockW / 2;
+
+    // 智能吸附到最近的一侧边缘（左半屏吸附靠左，右半屏吸附靠右）
+    const targetSide = (dockCenterX < winW / 2) ? 'left' : 'right';
+
+    // 垂直方向若靠近视口中段（50px以内），自动磁吸至正居中
+    const dockCenterY = currentTop + dockH / 2;
+    let targetTopRatio = dockCenterY / winH;
+    if (Math.abs(dockCenterY - winH / 2) < 50) {
+      targetTopRatio = 0.5;
+    }
+
+    applyDockSnap(targetSide, targetTopRatio, true);
+  }
+
+  dock.addEventListener('pointerup', onDockDragEnd);
+  dock.addEventListener('pointercancel', onDockDragEnd);
+
+  // 窗口调整大小时自动重新吸附贴边，保证不溢出屏幕
+  window.addEventListener('resize', () => {
+    if (!isDockDragging) {
+      let topRatio = 0.5;
+      try {
+        const saved = localStorage.getItem('pipcast_dock_pref');
+        if (saved) {
+          topRatio = JSON.parse(saved).topRatio || 0.5;
+        }
+      } catch (_) {}
+      applyDockSnap(dockCurrentSide, topRatio, false);
+    }
+  });
+
+  // 页面就绪后立即初始化吸附位置
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initDockPosition);
+  } else {
+    initDockPosition();
+  }
 
   /* =========================================================
      6. 60 FPS 录制与 Canvas 实时合成
