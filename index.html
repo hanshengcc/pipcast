@@ -1903,8 +1903,16 @@
      3.5 框选局部范围与裁剪录制 (Region / Crop Capture)
      ========================================================= */
 
+  let cachedStageRect = { left: 0, top: 0, width: 1920, height: 1080 };
+  let cachedCamBubbleRect = { left: 40, top: 40, width: 180, height: 180 };
+
   function getScreenVideoRenderedRect() {
-    const sr = stage.getBoundingClientRect();
+    let sr = stage.getBoundingClientRect();
+    if (sr.width > 0 && sr.height > 0) {
+      cachedStageRect = { left: sr.left, top: sr.top, width: sr.width, height: sr.height };
+    } else {
+      sr = cachedStageRect;
+    }
     if (!screenVideo.videoWidth || !screenVideo.videoHeight) {
       return { left: 0, top: 0, width: sr.width, height: sr.height };
     }
@@ -2924,12 +2932,93 @@
   }
 
   /* =========================================================
-     6. 60 FPS 录制与 Canvas 实时合成
+     6. 60 FPS 录制与 Canvas 实时合成 (双引擎：前台 rAF + 后台 Worker 定时器)
      ========================================================= */
 
+  let renderWorker = null;
+  let bgAudioKeepAlive = null;
+  let lastFrameRenderTime = 0;
+
+  function initRenderWorker() {
+    if (renderWorker) return;
+    try {
+      const workerCode = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data.action === 'start') {
+            const interval = e.data.interval || 16.66;
+            if (timer) clearInterval(timer);
+            timer = setInterval(function() {
+              self.postMessage('tick');
+            }, interval);
+          } else if (e.data.action === 'stop') {
+            if (timer) {
+              clearInterval(timer);
+              timer = null;
+            }
+          }
+        };
+      `;
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      renderWorker = new Worker(URL.createObjectURL(blob));
+      renderWorker.onmessage = function(e) {
+        if (e.data === 'tick' && isRecording) {
+          renderCompositeFrame();
+        }
+      };
+    } catch (err) {
+      console.warn('Web Worker timer not available:', err);
+    }
+  }
+
+  function startAudioKeepAlive() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!audioContext) audioContext = new AudioCtx();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+      }
+      if (!bgAudioKeepAlive) {
+        // 创建几乎无声的音频流 (gain: 0.00001)，通知 Chrome 内核此标签页处于媒体活跃状态
+        // 彻底豁免 Chrome 对后台标签页的 CPU/定时器冻结与降频策略
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        gain.gain.value = 0.00001;
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        bgAudioKeepAlive = { osc, gain };
+      }
+    } catch (e) {
+      console.warn('Audio keepalive init warning:', e);
+    }
+  }
+
+  function stopAudioKeepAlive() {
+    if (bgAudioKeepAlive) {
+      try {
+        bgAudioKeepAlive.osc.stop();
+        bgAudioKeepAlive.osc.disconnect();
+        bgAudioKeepAlive.gain.disconnect();
+      } catch (e) {}
+      bgAudioKeepAlive = null;
+    }
+  }
+
   function renderCompositeFrame() {
+    const now = performance.now();
+    const targetFps = qualityPresets[currentQuality]?.fps || 60;
+    // 防抖：同一渲染帧内不重复绘制（保证平滑帧率，防止双引擎重叠）
+    if (now - lastFrameRenderTime < (1000 / targetFps) * 0.7) return;
+    lastFrameRenderTime = now;
+
     const vr = getScreenVideoRenderedRect();
-    const sr = stage.getBoundingClientRect();
+    let sr = stage.getBoundingClientRect();
+    if (sr.width > 0 && sr.height > 0) {
+      cachedStageRect = { left: sr.left, top: sr.top, width: sr.width, height: sr.height };
+    } else {
+      sr = cachedStageRect;
+    }
 
     if (screenVideo.style.display !== 'none' && screenVideo.videoWidth) {
       if (isCropActive && (cropRect.w < 0.999 || cropRect.h < 0.999 || cropRect.x > 0.001 || cropRect.y > 0.001)) {
@@ -2947,7 +3036,12 @@
     }
 
     if (isCameraActive && camVideo.videoWidth) {
-      const br = camBubble.getBoundingClientRect();
+      let br = camBubble.getBoundingClientRect();
+      if (br.width > 0 && br.height > 0) {
+        cachedCamBubbleRect = { left: br.left, top: br.top, width: br.width, height: br.height };
+      } else {
+        br = cachedCamBubbleRect;
+      }
       const bLeft = br.left - sr.left;
       const bTop = br.top - sr.top;
 
@@ -3026,8 +3120,24 @@
   function drawComposite() {
     if (!isRecording) return;
     renderCompositeFrame();
-    requestAnimationFrame(drawComposite);
+    if (!document.hidden) {
+      requestAnimationFrame(drawComposite);
+    }
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (isRecording) {
+      if (document.hidden) {
+        if (renderWorker) {
+          const qConfig = qualityPresets[currentQuality] || qualityPresets['1080p'];
+          renderWorker.postMessage({ action: 'start', interval: 1000 / qConfig.fps });
+        }
+      } else {
+        renderCompositeFrame();
+        requestAnimationFrame(drawComposite);
+      }
+    }
+  });
 
   function cancelCountdown() {
     if (countdownInterval) {
@@ -3083,11 +3193,15 @@
 
   function resetRecordUI() {
     isRecording = false;
+    if (renderWorker) {
+      renderWorker.postMessage({ action: 'stop' });
+    }
+    stopAudioKeepAlive();
     btnRecord.classList.remove('recording');
     btnRecord.classList.remove('pulse-attention');
     timerBadge.classList.remove('recording');
     dock.classList.remove('recording-active');
-    if (recordBtnText) recordBtnText.innerText = '开始录制 (空格)';
+    if (recordBtnText) recordBtnText.innerText = '录制 (空格 · 右键换画质)';
     if (recordIconWrapper) {
       recordIconWrapper.innerHTML = '<svg viewBox="0 0 24 24" id="recIcon"><circle cx="12" cy="12" r="5" fill="#f43f5e"/><circle cx="12" cy="12" r="9" stroke="#f43f5e" stroke-width="2" fill="none"/></svg>';
     }
@@ -3104,6 +3218,7 @@
       isCropEditing = false;
       if (cropOverlay) cropOverlay.classList.remove('active');
     }
+    initRenderWorker();
     const qConfig = qualityPresets[currentQuality] || qualityPresets['1080p'];
     recordedChunks = [];
     canvas.width = qConfig.width;
@@ -3174,6 +3289,11 @@
     };
 
     mediaRecorder.onstop = () => {
+      if (renderWorker) {
+        renderWorker.postMessage({ action: 'stop' });
+      }
+      stopAudioKeepAlive();
+
       // 录制结束，断开录制专用的临时音频节点
       activeAudioSources.forEach(s => {
         try { s.disconnect(); } catch (err) {}
@@ -3224,6 +3344,19 @@
 
       resetRecordUI();
     };
+
+    // 确保视频源在后台持续激活运行
+    if (screenVideo && screenVideo.srcObject) {
+      screenVideo.play().catch(() => {});
+    }
+    if (camVideo && camVideo.srcObject) {
+      camVideo.play().catch(() => {});
+    }
+
+    if (renderWorker) {
+      renderWorker.postMessage({ action: 'start', interval: 1000 / qConfig.fps });
+    }
+    startAudioKeepAlive();
 
     mediaRecorder.start(200);
     isRecording = true;
